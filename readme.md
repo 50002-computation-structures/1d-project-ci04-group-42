@@ -21,4 +21,4 @@ To build the ALU modularly, we will create separate units for each core operatio
 
 Each of these modules will generate its own 32-bit output, which we’ll later combine to produce a single ALU result.
 
-Consult 50.002 lab handout for more information.
+
