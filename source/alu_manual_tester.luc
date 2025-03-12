@@ -11,6 +11,11 @@ module alu_manual_tester#(
 ) {
     
     alu alu
+    x_bit_left_shifter test_shift(#SIZE(8),#SHIFT(7))
+    
+    //just tessting the shifter left, can delete aft this
+    sig a[8]
+    sig b
     
     always {
         // implement alu tester logic here
@@ -21,5 +26,14 @@ module alu_manual_tester#(
         io_segment = 0
         io_select = 4hF
         
+        //just testing the shifter left, can delete aft this
+        a= io_dip[0]
+        b=io_dip[1][0]
+        test_shift.a=a
+        test_shift.do_shift=b
+        test_shift.pad=b0
+        io_led[0]=test_shift.out
+        
+        io_led[1][0]=b
     }
 }
