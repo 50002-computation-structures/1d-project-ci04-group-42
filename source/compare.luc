@@ -1,14 +1,25 @@
 module compare (
-    input z,
-    input v,
-    input n,
-    input alufn[6],
+    input z, // zero
+    input v, // overflow
+    input n, // -ve
+    input alufn[6],  
     output cmp
 ) {
+    sig in[4] // 4 bit wire to hold mux_4 i/ps
+    mux4 m
     
-    always {
-        
-        cmp = 0
-        
+    always{
+    // logic for compare
+    in[0] = 0          //default not used
+    in[1] = z          // A == B
+    in[2] = n ^ v    // A < B
+    in[3] = z | (n^v)  // A <= B
+    
+    // defining inputs for mux_4 
+    m.s0=alufn[1] // select 0
+    m.s1=alufn[2] // select 1
+    m.in=in      // mux i/p
+    cmp = m.out      // mux o/p
+    
     }
 }

@@ -7,15 +7,85 @@ module alu_manual_tester#(
     input io_dip[3][8],
     output io_led[3][8],
     output io_segment[8],
+    output led[8],
     output io_select[4]
 ) {
     
     alu alu
-    x_bit_left_shifter test_shift(#SIZE(8),#SHIFT(7))
     
-    //just tessting the shifter left, can delete aft this
-    sig a[8]
-    sig b
+    
+    enum States {
+        RUN,
+        STOP,
+        UPDATE,
+        IDLE
+    }
+    
+    const SIZE = 29
+    //const SEVEN_SEG_DIV = $is_sim() ? 3 : 16 // put 6 for sim, 16 on hardware
+    const SLOW_CLOCK_DEFAULT_SPEED = $is_sim() ? 8 : 28 // put 8  for sim, 28 for hardware
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000
+    
+    sig slow_clock
+    
+    const INSTRUCTION = {
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        //c{6b110111, 32d45, 32d45}, c{6b110111, 32d45, 32d30}, //cmple
+        c{6b10,32d25, 32d10},c{6b10,32d1, 32d6},c{6b10,32d0, 32d5}, //multiply
+        c{6b01, 32d0, 32d2147483647},c{6b01, 32d10, 32d20},c{6b01, 32d0, 32d20},c{6b01, 32d20, 32d0}, //sub
+        c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d0,32d20},c{6b0,32d20, 32d0}} //add
+    const CORRECT_ANS = {
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        //c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmple
+        c{32d250,0,0,0},c{32d6,0,0,0},c{32d0,0,0,0}, //multiply
+        c{-31d2147483647,0,0,1},c{-31d10,0,0,1},c{-31d20,0,0,1},c{32d20,0,0,0}, //sub
+        c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},c{32d20,0,0,0}} //add
+    sig cur_ins[70]
+    sig cur_out[32]
+    sig cur_v
+    
+    sig cor_ans[35]
+    sig cor_out[32]
+    sig cor_z
+    sig cor_v
+    sig cor_n
+    
+    
+    .clk(clk) {
+        
+        edge_detector io_button_edge[5](#RISE(5x{{1}}), #FALL(5x{{0}})) //edge detector component in alchitry lab
+        edge_detector slow_clock_edge(#RISE(1), #FALL(0))
+        button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
+        .rst(rst) {
+            
+            //multi_seven_seg seg(#DIV(SEVEN_SEG_DIV)) 
+            dff counter[SIZE]
+            dff states[$width(States)](#INIT(States.IDLE)) //reset everything back to idle
+            dff slow_clock_enable(#INIT(0))
+            dff pc[6](#INIT(0))
+            // multi_decimal_renderer decimal_renderer(#SIZE(32))
+        }
+    }
+    
+    
+    
+    
     
     always {
         // implement alu tester logic here
@@ -26,14 +96,139 @@ module alu_manual_tester#(
         io_segment = 0
         io_select = 4hF
         
-        //just testing the shifter left, can delete aft this
-        a= io_dip[0]
-        b=io_dip[1][0]
-        test_shift.a=a
-        test_shift.do_shift=b
-        test_shift.pad=b0
-        io_led[0]=test_shift.out
         
-        io_led[1][0]=b
+        // condition the buttons, then take rising edges only
+        io_button_cond.in = io_button
+        io_button_edge.in = io_button_cond.out
+        led = 0
+        
+        
+        // connect dffs 
+        counter.d = counter.q + 1 // always increment
+        states.d = states.q
+        slow_clock_enable.d = slow_clock_enable.q
+        pc.d=pc.q
+      
+        
+        // signal connection
+        slow_clock = counter.q[SLOW_CLOCK_DEFAULT_SPEED] // pointed based on the bit of the counter 
+        
+        case (slow_clock_enable.q){
+            0:
+                slow_clock_edge.in = 0 // always don't increment or decrement
+            1: 
+                slow_clock_edge.in =  slow_clock 
+            default:
+                slow_clock_edge.in = 0
+        }
+        
+        case (states.q){
+            States.IDLE:
+                // this takes precedence
+                // if slow clock rising edge, go to UPDATE state
+            if (slow_clock_edge.out){
+            states.d=States.UPDATE
+                }
+            
+                //if button[1] is pressed
+            else if (io_button_edge.out[1]){
+                if (~|slow_clock_enable.q){
+                    states.d=States.RUN
+                    }
+                
+                else {
+                    states.d=States.STOP
+                }
+            }
+            
+            
+            
+            States.UPDATE:
+                
+            if (pc.q<d10){
+                    pc.d=pc.q+1
+                }
+            else{
+                pc.d=0
+                }
+           
+                // move on to next test case
+            
+                //back to idle
+                
+            states.d=States.IDLE
+                
+                
+            
+            States.RUN:
+                // handle slow clock, next cycle set to 1
+            slow_clock_enable.d=1
+                // return to IDLE
+            states.d=States.IDLE
+            
+            States.STOP:
+                // handle slow clock, next cycle set to 0
+            slow_clock_enable.d=0
+                // return to IDLE
+            states.d=States.IDLE
+            
+        }
+        
+       
+        cur_ins=INSTRUCTION[pc.q]
+        alu.alufn = cur_ins[69:64]
+        alu.a=cur_ins[63:32]
+        alu.b=cur_ins[31:0]
+        
+        //simulation of 'wrong' answer
+        if(io_dip[0][0]){
+            cur_out=~alu.out //check if first dip button is being pressed down. if yes, invert the output and v
+            cur_v = ~alu.v
+        }
+        else{
+            cur_out=alu.out
+            cur_v = alu.v
+        }
+        
+        
+        cor_ans = CORRECT_ANS[pc.q]
+        cor_out= cor_ans[34:3]
+        cor_z=cor_ans[2]
+        cor_v=cor_ans[1]
+        cor_n=cor_ans[0]
+        
+        //EMAIL NATALIE ASK IF NEED CHECK FOR N AND Z
+        //if ((cor_out==alu.out & cor_z == alu.z & cor_n == alu.n) | cor_v == alu.v){
+            //led[1]=1
+        //}
+        if ((cor_out==cur_out) | (cor_v & cor_v == cur_v)){ // either result is correct, or overflow
+            if ((cur_ins[69:64] == b000000)| (cur_ins[69:64] == b000001)){ //additional check for add and sub
+                if ((cor_z==alu.z & cor_n==alu.n) //either z and n values correct,
+                    | (cor_v == cur_v)){ //or overflow happens and alu correctly detects it
+                                                                            
+                    led[1]=1
+                }
+                else{ 
+                    led[2]=1
+                }
+            }
+            else{ //for other operations, no need additional check
+                led[1]=1
+            }
+        }
+        else{ //wrong (incorrect value AND overflow not supposed to happen)
+            led[2]=1
+        }
+        
+        //displays
+        
+        led[0]= slow_clock//blink according to slow clock
+        io_led[1]=c{b00,cur_ins[69:64]} //display current ALUFN
+        io_led[0]=pc.q //display current instruction index
+        
+        
+        //debug
+        //io_led[2][0]=(b0 == b0) | (b1 == b1)
+        
     }
 }

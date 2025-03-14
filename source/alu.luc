@@ -7,14 +7,63 @@ module alu (
     output v,
     output n
 ) {
+    //initialize muxes
+    mux2 s_mul_select[32]
+    mux4 main_mux[32]
     
+    //initialize functions
+    adder adder(#SIZE(32))
+    shifter shifter
+    multiplier multiplier
+    boolean boolean (#SIZE(32))
+    compare compare
+    adder compare_aider (#SIZE(32))
     
+    //helper signals
+    sig compare_out[32]
     
     always {
-        // implement alu logic here
-        out = 0 
-        z = 0
-        v = 0 
-        n = 0    
+        //assign all inputs
+        adder.a=a
+        adder.b=b
+        adder.alufn=alufn
+        
+        multiplier.a=a
+        multiplier.b=b
+        
+        shifter.a=a
+        shifter.b=b[4:0]
+        shifter.alufn=alufn
+        
+        boolean.a=a
+        boolean.b=b
+        boolean.alufn=alufn
+        
+        compare_aider.a=a
+        compare_aider.b=b
+        compare_aider.alufn=b000001 //always subtract
+        compare.z=compare_aider.z
+        compare.v=compare_aider.v 
+        compare.n=compare_aider.n
+        compare.alufn=alufn
+        compare_out=c{31b0,compare.cmp}
+        
+        //select for output
+        s_mul_select.s0=32x{alufn[1]}
+        repeat (i,32){
+            s_mul_select.in[i]= c{multiplier.mul[i],adder.out[i]}
+        }
+        
+        main_mux.s0=32x{alufn[4]}
+        main_mux.s1=32x{alufn[5]}
+        repeat (i,32){
+            main_mux.in[i]= c{compare_out[i],shifter.shift[i],boolean.bool[i],s_mul_select.out[i]}
+        }
+        
+        // outputs
+        out = main_mux.out 
+        z = adder.z
+        v = adder.v
+        n = adder.n
     }
 }
