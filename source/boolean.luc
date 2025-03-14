@@ -7,7 +7,7 @@ module boolean #(
     output bool[SIZE]
 ) {
     
-    mux_4 mux_4_32[32];
+    mux4 mux_4_32[32];
     always {
         // implement boolean unit logic here
         mux_4_32.in = 32x{{alufn[3:0]}}; 
