@@ -14,11 +14,15 @@ module alu_manual_tester#(
     alu alu
     
     
+    
+    
     enum States {
         RUN,
         STOP,
         UPDATE,
-        IDLE
+        IDLE,
+        NEXT,
+        PREV
     }
     
     const SIZE = 29
@@ -32,13 +36,13 @@ module alu_manual_tester#(
         //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
         //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
         //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b110111, 32d45, 32d45}, c{6b110111, 32d45, 32d30}, //cmple
+        c{6h18, 32d45, 32d0}, c{6h18, 32d45, 32hFFFFFFFF}, c{6h18, 32d50, 32d50}, c{6h18, 32d50, ~32d50}, //and
+        c{6h1E, 32d45, 32d0}, c{6h1E, 32d45, 32hFFFFFFFF}, c{6h1E, 32d45, 32d45}, //or
+        c{6h16, 32d5, 32d0}, c{6h16, 32d5, 32d5},c{6h16, 32d5, ~32d5}, //xor
+        c{6h1A, 32d5, 32d0}, //a
+        c{6b110011, 32d45, 32d45},c{6b110011, 32d45, 32d50}, //cmpeq
+        c{6b110101, 32d40, 32d45}, c{6b110101, 32d45, 32d45},c{6b110101, 32d45, 32d40}, //cmplt
+        c{6b110101, 32d40, 32d45},c{6b110111, 32d45, 32d45}, c{6b110111, 32d45, 32d30}, //cmple
         c{6b10,32d25, 32d10},c{6b10,32d1, 32d6},c{6b10,32d0, 32d5}, //multiply
         c{6b01, 32d0, 32d2147483647},c{6b01, 32d10, 32d20},c{6b01, 32d0, 32d20},c{6b01, 32d20, 32d0}, //sub
         c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d0,32d20},c{6b0,32d20, 32d0}} //add
@@ -46,13 +50,13 @@ module alu_manual_tester#(
         //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
         //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
         //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmple
+        c{32d0, 0, 0, 0}, c{32d45, 0, 0, 0}, c{32d50, 0, 0, 0}, c{32d0, 0, 0, 0}, //and
+        c{32d45, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, c{32d45, 0, 0, 0}, //or
+        c{32d5, 0, 0, 0}, c{32d0, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, //xor
+        c{32d5, 0, 0, 0}, //a
+        c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmpeq,
+        c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0},c{32d0, 0, 0, 0}, //cmplt
+        c{32d1, 0, 0, 0},c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmple
         c{32d250,0,0,0},c{32d6,0,0,0},c{32d0,0,0,0}, //multiply
         c{-31d2147483647,0,0,1},c{-31d10,0,0,1},c{-31d20,0,0,1},c{32d20,0,0,0}, //sub
         c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},c{32d20,0,0,0}} //add
@@ -140,12 +144,22 @@ module alu_manual_tester#(
                     states.d=States.STOP
                 }
             }
+            else if (io_button_edge.out[4]){
+                if (~|slow_clock_enable.q){
+                        states.d=States.NEXT
+                    }
+                }
+            else if (io_button_edge.out[3]){
+                if (~|slow_clock_enable.q){
+                        states.d=States.PREV
+                    }
+                }
             
             
             
             States.UPDATE:
                 
-            if (pc.q<d10){
+            if (pc.q<d29){
                     pc.d=pc.q+1
                 }
             else{
@@ -158,7 +172,23 @@ module alu_manual_tester#(
                 
             states.d=States.IDLE
                 
-                
+            States.NEXT:
+                if (pc.q<d29){
+                    pc.d=pc.q+1
+                }
+            else{
+                pc.d=0
+                }
+            states.d=States.IDLE
+            
+            States.PREV:
+                if (pc.q>d0){
+                    pc.d=pc.q-1
+                }
+            else{
+                pc.d=d29
+                }
+            states.d=States.IDLE
             
             States.RUN:
                 // handle slow clock, next cycle set to 1
@@ -174,7 +204,7 @@ module alu_manual_tester#(
             
         }
         
-       
+        //READING INSTRUCTION
         cur_ins=INSTRUCTION[pc.q]
         alu.alufn = cur_ins[69:64]
         alu.a=cur_ins[63:32]
@@ -190,18 +220,16 @@ module alu_manual_tester#(
             cur_v = alu.v
         }
         
-        
+        //FETCHING CORRECT OUTPUTS
         cor_ans = CORRECT_ANS[pc.q]
         cor_out= cor_ans[34:3]
         cor_z=cor_ans[2]
         cor_v=cor_ans[1]
         cor_n=cor_ans[0]
         
-        //EMAIL NATALIE ASK IF NEED CHECK FOR N AND Z
-        //if ((cor_out==alu.out & cor_z == alu.z & cor_n == alu.n) | cor_v == alu.v){
-            //led[1]=1
-        //}
-        if ((cor_out==cur_out) | (cor_v & cor_v == cur_v)){ // either result is correct, or overflow
+        
+        //CHECKING IF OUTPUT IS CORRECT
+        if ((cor_out==cur_out) | (cor_v & cur_v)){ // either result is correct, or overflow
             if ((cur_ins[69:64] == b000000)| (cur_ins[69:64] == b000001)){ //additional check for add and sub
                 if ((cor_z==alu.z & cor_n==alu.n) //either z and n values correct,
                     | (cor_v == cur_v)){ //or overflow happens and alu correctly detects it
@@ -220,7 +248,7 @@ module alu_manual_tester#(
             led[2]=1
         }
         
-        //displays
+        //AIDING DISPLAYS
         
         led[0]= slow_clock//blink according to slow clock
         io_led[1]=c{b00,cur_ins[69:64]} //display current ALUFN
@@ -228,7 +256,7 @@ module alu_manual_tester#(
         
         
         //debug
-        //io_led[2][0]=(b0 == b0) | (b1 == b1)
+        
         
     }
 }
