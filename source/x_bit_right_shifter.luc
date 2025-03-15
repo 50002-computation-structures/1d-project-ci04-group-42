@@ -1,35 +1,25 @@
 module x_bit_right_shifter #(
-    SIZE = 32 : SIZE>0,
-    SHIFT = 8 : SHIFT > -1 & SHIFT < SIZE)
+SIZE = 32 : SIZE>0,
+SHIFT = 8 : SHIFT > -1 & SHIFT < SIZE)
 (
     input a[SIZE],  
-    input do_shift,  
-    input pad,
+    input do_shift,  // signal to perform the shift or not
+    input pad, 
     output out[SIZE]
     
     
 ) {
-    mux2 shift_unit[SIZE]
-    sig shifted_pattern[SIZE]
-    sig reversed_a[SIZE]
-    sig int_out[SIZE]
-    
-    always { 
-        repeat (i,SIZE){  //reverse the A input
-            reversed_a[i] = a[SIZE-1] 
-        }
-        
-        shift_unit.s0 = SIZEx{do_shift}//mux2.s0 = SIZEx{do_shift}
-        shifted_pattern = c{a[SIZE-1-SHIFT:0],SHIFTx{pad}} 
+    mux2 shift_unit[SIZE] // 32 mux_2 modules which stores whether each bit is shifted (1) or not (0)
+    sig shifted_pattern[SIZE] // store the shifted binary number
+    always {
+        shift_unit.s0 = SIZEx{do_shift} // getting values of s0 (if we shift 1 bit we need shift all the 
+        // other bits so we change the whole array of shift)_unit)
+        shifted_pattern = c{SHIFTx{pad} ,a[SIZE-1:SHIFT]} // concatenating the shifted + padding
         repeat (i,SIZE){
-            shift_unit.in[i]= c{shifted_pattern[i],reversed_a[i]}
+            shift_unit.in[i]= c{shifted_pattern[i],a[i]}
+        
         }
         
-        int_out = shift_unit.out  
-        
-        //output is inverted to return to original expression after RS operation
-        repeat (i, SIZE){
-            out[i] = int_out[SIZE-1-i]
-        }
+        out = shift_unit.out
     }
 }
