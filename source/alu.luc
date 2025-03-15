@@ -33,7 +33,7 @@ module alu (
         
         shifter.a=a
         shifter.b=b[4:0]
-        shifter.alufn=alufn
+        shifter.alufn=alufn[1:0] //assign correct alufn add
         
         boolean.a=a
         boolean.b=b
@@ -57,7 +57,7 @@ module alu (
         main_mux.s0=32x{alufn[4]}
         main_mux.s1=32x{alufn[5]}
         repeat (i,32){
-            main_mux.in[i]= c{compare_out[i],shifter.shift[i],boolean.bool[i],s_mul_select.out[i]}
+            main_mux.in[i]= c{compare_out[i],shifter.out[i],boolean.bool[i],s_mul_select.out[i]}
         }
         
         // outputs
