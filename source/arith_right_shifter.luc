@@ -1,3 +1,5 @@
+//not used 
+
 module arith_right_shifter #(
     SIZE = 32 : SIZE>0
 )(
