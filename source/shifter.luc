@@ -1,30 +1,34 @@
 module shifter (
     input a[32],
     input b[5],
-    input alufn[2],
-    output out[32]
-  ) {
-    left_shifter left_shift
-    right_shifter right_shift
-    arith_right_shifter arith_right_shift 
+    input alufn[6],
+    output shift[32]
+) {
+    left_shifter leftShifter
+    right_shifter rightShifter 
+    right_shifter arithRightShifter
     
+
     always {
-        left_shift.a = a 
-        left_shift.b = b 
-        left_shift.pad = 0 
+        leftShifter.a = a
+        leftShifter.b = b
+        leftShifter.pad = 0
+        rightShifter.pad = 0 
+        rightShifter.a = a
+        rightShifter.b = b
+        arithRightShifter.a = a
+        arithRightShifter.b = b
+        arithRightShifter.pad = a[31] // MSB
         
-        right_shift.a = a 
-        right_shift.b = b 
-        right_shift.pad = 0
         
-        arith_right_shift.a = a 
-        arith_right_shift.b = b
+        case(alufn[1:0]){
+            
+            b00: shift = leftShifter.shl; // left shift
+            b01: shift = rightShifter.shr; // right shift
+            b11: shift = arithRightShifter.shr; // arithmetic right shift
+            default: shift = a;
+        }
         
-        case (alufn_signal){
-            default: out = 0;
-            b00: out = left_shift.shl;
-            b01: out = right_shift.shr;
-            b11: out = arith_right_shift.sra;
-    }
-  }
+        
+    } 
 }
