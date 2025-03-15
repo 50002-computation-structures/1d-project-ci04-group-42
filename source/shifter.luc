@@ -1,7 +1,7 @@
 module shifter (
     input a[32],
     input b[5],
-    input alufn_signal[2],
+    input alufn[2],
     output out[32]
   ) {
     left_shifter left_shift
