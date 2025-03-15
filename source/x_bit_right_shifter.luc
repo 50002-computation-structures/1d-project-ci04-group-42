@@ -1,0 +1,35 @@
+module x_bit_right_shifter #(
+    SIZE = 32 : SIZE>0,
+    SHIFT = 8 : SHIFT > -1 & SHIFT < SIZE)
+(
+    input a[SIZE],  
+    input do_shift,  
+    input pad,
+    output out[SIZE]
+    
+    
+) {
+    mux2 shift_unit[SIZE]
+    sig shifted_pattern[SIZE]
+    sig reversed_a[SIZE]
+    sig int_out[SIZE]
+    
+    always { 
+        repeat (i,SIZE){  //reverse the A input
+            reversed_a[i] = a[SIZE-1] 
+        }
+        
+        shift_unit.s0 = SIZEx{do_shift}//mux2.s0 = SIZEx{do_shift}
+        shifted_pattern = c{a[SIZE-1-SHIFT:0],SHIFTx{pad}} 
+        repeat (i,SIZE){
+            shift_unit.in[i]= c{shifted_pattern[i],reversed_a[i]}
+        }
+        
+        int_out = shift_unit.out  
+        
+        //output is inverted to return to original expression after RS operation
+        repeat (i, SIZE){
+            out[i] = int_out[SIZE-1-i]
+        }
+    }
+}
