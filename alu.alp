@@ -32,18 +32,6 @@
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/bit_reverse.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
-                    "path": "source/boolean.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
                     "path": "source/shifter.luc"
                 }
             },
@@ -116,30 +104,6 @@
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/multi_seven_seg.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "Component",
-                    "path": "Miscellaneous/decoder.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
-                    "path": "source/seven_seg.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "Component",
-                    "path": "Miscellaneous/counter.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
                     "path": "source/compare.luc"
                 }
             },
@@ -165,14 +129,14 @@
         "constraintFiles": [
             {
                 "file": {
-                    "type": "Component",
-                    "path": "Constraints/io_v1.acf"
+                    "type": "DiskFile",
+                    "path": "constraint/alchitry.acf"
                 }
             },
             {
                 "file": {
-                    "type": "DiskFile",
-                    "path": "constraint/alchitry.acf"
+                    "type": "Component",
+                    "path": "Constraints/io_v1_pulldown.acf"
                 }
             }
         ],
