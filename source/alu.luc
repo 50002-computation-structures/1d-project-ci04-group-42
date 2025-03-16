@@ -15,7 +15,7 @@ module alu (
     adder adder(#SIZE(32))
     shifter shifter
     multiplier multiplier
-    boolean boolean (#SIZE(32))
+    boolean2 boolean (#SIZE(32))
     compare compare
     adder compare_aider (#SIZE(32))
     
@@ -33,7 +33,7 @@ module alu (
         
         shifter.a=a
         shifter.b=b[4:0]
-        shifter.alufn=alufn[1:0] //assign correct alufn add
+        shifter.alufn=alufn //assign correct alufn
         
         boolean.a=a
         boolean.b=b

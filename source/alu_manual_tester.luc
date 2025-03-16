@@ -1,5 +1,6 @@
-module alu_manual_tester#(
-    CLK_FREQ ~ 1000 : CLK_FREQ > 0) 
+module alu_manual_tester
+//#(
+   // CLK_FREQ ~ 1000 : CLK_FREQ > 0) 
 (
     input clk,  // clock
     input rst,  // reset
@@ -12,6 +13,8 @@ module alu_manual_tester#(
 ) {
     
     alu alu
+    
+    
     
     
     
@@ -46,8 +49,8 @@ module alu_manual_tester#(
         c{6b10,32d25, 32d10},c{6b10,32d1, 32d6},c{6b10,32d0, 32d5}, //multiply
         c{6b01, 32d0, 32d2147483647},c{6b01, 32d10, 32d20},c{6b01, 32d0, 32d20},c{6b01, 32d20, 32d0}, //sub
         c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d0,32d20},c{6b0,32d20, 32d0}, //add
-        c{6b100000, 32d8, 32d1},  // SHL (8 << 1 = 16)
-        c{6b100001, 32d16, 32d2}, // SHR (16 >> 2 = 4)
+        c{6h20, 32h80000001, 32d1}, c{6h20, 32d5, 32d0}, c{6h20, 32d1, 32d31},c{6h20, 32d8, 32d1},  // SHL
+        c{6h21, 32d45, 32d0}, c{6h21, 32hFFFFFFFF, 32d31},c{6h21, 32d16, 32d2}, // SHR 
         c{6b100011, 32hFFFFFFFF, 32d1}} // SAR (-1 >> 1 = -1) 
 
     const CORRECT_ANS = {
@@ -58,14 +61,14 @@ module alu_manual_tester#(
         c{32d45, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, c{32d45, 0, 0, 0}, //or
         c{32d5, 0, 0, 0}, c{32d0, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, //xor
         c{32d5, 0, 0, 0}, //a
-        c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmpeq,
+        c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmpeq
         c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0},c{32d0, 0, 0, 0}, //cmplt
         c{32d1, 0, 0, 0},c{32d1, 0, 0, 0}, c{32d0, 0, 0, 0}, //cmple
         c{32d250,0,0,0},c{32d6,0,0,0},c{32d0,0,0,0}, //multiply
         c{-31d2147483647,0,0,1},c{-31d10,0,0,1},c{-31d20,0,0,1},c{32d20,0,0,0}, //sub
         c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},c{32d20,0,0,0}, //add 
-        c{32d16, 0, 0, 0},  // SHL: 8 << 1 = 16
-        c{32d4, 0, 0, 0},   // SHR: 16 >> 2 = 4
+        c{32d2, 0, 0, 0},c{32d5, 0, 0, 0}, c{32h80000000, 0, 0, 0}, c{32d16, 0, 0, 0},  // SHL
+        c{32d45, 0, 0, 0}, c{32d1, 0, 0, 0}, c{32d4, 0, 0, 0},   // SHR
         c{32hFFFFFFFF, 0, 0, 0}} // SAR: -1 >> 1 = -1 
 
     sig cur_ins[70]

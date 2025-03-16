@@ -142,6 +142,24 @@
                     "type": "DiskFile",
                     "path": "source/compare.luc"
                 }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/right_shifter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/x_bit_right_shifter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/boolean2.luc"
+                }
             }
         ],
         "constraintFiles": [
