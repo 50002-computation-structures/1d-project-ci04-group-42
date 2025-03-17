@@ -124,6 +124,12 @@
                     "type": "DiskFile",
                     "path": "source/boolean2.luc"
                 }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alu_auto_tester.luc"
+                }
             }
         ],
         "constraintFiles": [
