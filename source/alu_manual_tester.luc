@@ -14,15 +14,9 @@ module alu_manual_tester
     
     alu alu
     
-    
-    
-    
-    
-    
     enum States {
         RUN,
         STOP,
-        UPDATE,
         IDLE,
         NEXT,
         PREV
@@ -36,9 +30,7 @@ module alu_manual_tester
     sig slow_clock
     
     const INSTRUCTION = {
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
-        //c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d20, 32d0},
+        
         c{6h18, 32d45, 32d0}, c{6h18, 32d45, 32hFFFFFFFF}, c{6h18, 32d50, 32d50}, c{6h18, 32d50, ~32d50}, //and
         c{6h1E, 32d45, 32d0}, c{6h1E, 32d45, 32hFFFFFFFF}, c{6h1E, 32d45, 32d45}, //or
         c{6h16, 32d5, 32d0}, c{6h16, 32d5, 32d5},c{6h16, 32d5, ~32d5}, //xor
@@ -54,9 +46,7 @@ module alu_manual_tester
         c{6b100011, 32hFFFFFFFF, 32d1}} // SAR (-1 >> 1 = -1) 
 
     const CORRECT_ANS = {
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
-        //c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},
+        
         c{32d0, 0, 0, 0}, c{32d45, 0, 0, 0}, c{32d50, 0, 0, 0}, c{32d0, 0, 0, 0}, //and
         c{32d45, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, c{32d45, 0, 0, 0}, //or
         c{32d5, 0, 0, 0}, c{32d0, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, //xor
@@ -89,19 +79,15 @@ module alu_manual_tester
         button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
         .rst(rst) {
             
-            //multi_seven_seg seg(#DIV(SEVEN_SEG_DIV)) 
+            
             dff counter[SIZE]
             dff states[$width(States)](#INIT(States.IDLE)) //reset everything back to idle
             dff slow_clock_enable(#INIT(0))
             dff pc[6](#INIT(0))
-            // multi_decimal_renderer decimal_renderer(#SIZE(32))
+            dff is_correct (#INIT(1))
         }
     }
-    
-    
-    
-    
-    
+
     always {
         // implement alu tester logic here
         alu.a = 0
@@ -123,7 +109,7 @@ module alu_manual_tester
         states.d = states.q
         slow_clock_enable.d = slow_clock_enable.q
         pc.d=pc.q
-      
+        is_correct.d=is_correct.q
         
         // signal connection
         slow_clock = counter.q[SLOW_CLOCK_DEFAULT_SPEED] // pointed based on the bit of the counter 
@@ -139,12 +125,13 @@ module alu_manual_tester
         
         case (states.q){
             States.IDLE:
+            
                 // this takes precedence
                 // if slow clock rising edge, go to UPDATE state
             if (slow_clock_edge.out){
-            states.d=States.UPDATE
+            states.d=States.NEXT
                 }
-            
+
                 //if button[1] is pressed
             else if (io_button_edge.out[1]){
                 if (~|slow_clock_enable.q){
@@ -166,38 +153,33 @@ module alu_manual_tester
                     }
                 }
             
-            
-            
-            States.UPDATE:
+            else if (~is_correct.q){
+                if (slow_clock_enable.q){
+                    states.d=States.STOP
+                }
                 
-            if (pc.q<d29){
+            }
+            
+            States.NEXT:
+                // move on to next test case
+            if (pc.q<d37){
                     pc.d=pc.q+1
                 }
             else{
                 pc.d=0
                 }
-           
-                // move on to next test case
-            
+ 
                 //back to idle
                 
             states.d=States.IDLE
-                
-            States.NEXT:
-                if (pc.q<d29){
-                    pc.d=pc.q+1
-                }
-            else{
-                pc.d=0
-                }
-            states.d=States.IDLE
-            
+
             States.PREV:
-                if (pc.q>d0){
+                //move to previous test case
+            if (pc.q>d0){
                     pc.d=pc.q-1
                 }
             else{
-                pc.d=d29
+                pc.d=d37
                 }
             states.d=States.IDLE
             
@@ -212,6 +194,7 @@ module alu_manual_tester
             slow_clock_enable.d=0
                 // return to IDLE
             states.d=States.IDLE
+           
             
         }
         
@@ -244,18 +227,21 @@ module alu_manual_tester
             if ((cur_ins[69:64] == b000000)| (cur_ins[69:64] == b000001)){ //additional check for add and sub
                 if ((cor_z==alu.z & cor_n==alu.n) //either z and n values correct,
                     | (cor_v == cur_v)){ //or overflow happens and alu correctly detects it
-                                                                            
+                    is_correct.d=1
                     led[1]=1
                 }
                 else{ 
+                    is_correct.d=0
                     led[2]=1
                 }
             }
             else{ //for other operations, no need additional check
+                is_correct.d=1
                 led[1]=1
             }
         }
         else{ //wrong (incorrect value AND overflow not supposed to happen)
+            is_correct.d=0
             led[2]=1
         }
         
@@ -266,7 +252,6 @@ module alu_manual_tester
         io_led[0]=pc.q //display current instruction index
         
         
-        //debug
         
         
     }
