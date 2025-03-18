@@ -10,17 +10,31 @@ module divider #(
 ) {
     sig quotient[SIZE]
     sig b_abs[SIZE]
+    sig a_abs[SIZE]
     
     always {
-        if (b[SIZE-1]) {
+        if (b[SIZE-1] & ~a[SIZE-1]) { //b negative, a positive
+            a_abs=a
             b_abs = -b
-            quotient = a / b_abs
+            quotient = a_abs / b_abs
             quotient = -quotient
         }
-        else {
-            b_abs = b
-            quotient = a / b_abs
+        else if (a[SIZE-1] & ~b[SIZE-1]){ //a negative, b positive
+            a_abs = -a
+            b_abs=b
+            quotient = a_abs / b_abs
+            quotient = -quotient
         }
+        else if (~a[SIZE-1] & ~b[SIZE-1]){ //both a and b positive
+            a_abs= a
+            b_abs = b
+            quotient = a_abs / b_abs
+        }
+        else { //both a and b negative
+            a_abs=-a 
+            b_abs=-b 
+            quotient = a_abs/b_abs
+}
         out = quotient 
         
         z = ~|quotient   

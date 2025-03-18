@@ -27,7 +27,8 @@ module alu_auto_tester (
     sig slow_clock
     
     const INSTRUCTION = {
-        
+        c{6b11,-31d10,32d2},c{6b11,32d15,32d3},c{6b11,32d10,32d1},c{6b11,32d0,32d5},  // division
+        c{6b11,32d2147483647,32d1},c{6b11,32d10,32hFFFFFFFE},c{6b11,-31d7,-31d3},  // division
         c{6h18, 32d45, 32d0}, c{6h18, 32d45, 32hFFFFFFFF}, c{6h18, 32d50, 32d50}, c{6h18, 32d50, ~32d50}, //and
         c{6h1E, 32d45, 32d0}, c{6h1E, 32d45, 32hFFFFFFFF}, c{6h1E, 32d45, 32d45}, //or
         c{6h16, 32d5, 32d0}, c{6h16, 32d5, 32d5},c{6h16, 32d5, ~32d5}, //xor
@@ -40,13 +41,13 @@ module alu_auto_tester (
         c{6b0,32d2147483647, 32d2147483647},c{6b0,32d15, 32d20},c{6b0,32d0,32d20},c{6b0,32d20, 32d0}, //add
         c{6h20, 32h80000001, 32d1}, c{6h20, 32d5, 32d0}, c{6h20, 32d1, 32d31},c{6h20, 32d8, 32d1},  // SHL
         c{6h21, 32d45, 32d0}, c{6h21, 32hFFFFFFFF, 32d31},c{6h21, 32d16, 32d2}, // SHR 
-        c{6b100011, 32hFFFFFFFF, 32d1},  // SAR (-1 >> 1 = -1)
-        c{6b11,32d10,32d2},c{6b11,32d15,32d3},c{6b11,32d10,32d1},c{6b11,32d0,32d5},  // division
-        c{6b11,32d2147483647,32d1},c{6b11,32d10,32hFFFFFFFE},c{6b11,32d7,32d3}  // division
+        c{6b100011, 32hFFFFFFFF, 32d1}  // SAR (-1 >> 1 = -1)
+        
     } 
         
     const CORRECT_ANS = {
-        
+        c{-31d5,0,0,0},c{32d5,0,0,0},c{32d10,0,0,0},c{32d0,1,0,0},   // division
+        c{32d2147483647,0,0,0},c{32hFFFFFFFB,0,0,1},c{32d2,0,0,0},   // division
         c{32d0, 0, 0, 0}, c{32d45, 0, 0, 0}, c{32d50, 0, 0, 0}, c{32d0, 0, 0, 0}, //and
         c{32d45, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, c{32d45, 0, 0, 0}, //or
         c{32d5, 0, 0, 0}, c{32d0, 0, 0, 0}, c{32hFFFFFFFF, 0, 0, 0}, //xor
@@ -59,9 +60,7 @@ module alu_auto_tester (
         c{32d4294967296,0,1,0},c{32d35,0,0,0},c{32d20,0,0,0},c{32d20,0,0,0}, //add 
         c{32d2, 0, 0, 0},c{32d5, 0, 0, 0}, c{32h80000000, 0, 0, 0}, c{32d16, 0, 0, 0},  // SHL
         c{32d45, 0, 0, 0}, c{32d1, 0, 0, 0}, c{32d4, 0, 0, 0},   // SHR
-        c{32hFFFFFFFF, 0, 0, 0},   // SAR: -1 >> 1 = -1 
-        c{32d5,0,0,0},c{32d5,0,0,0},c{32d10,0,0,0},c{32d0,1,0,0},   // division
-        c{32d2147483647,0,0,0},c{32hFFFFFFFB,0,0,1},c{32d2,0,0,0}   // division
+        c{32hFFFFFFFF, 0, 0, 0}   // SAR: -1 >> 1 = -1        
     } 
     
     sig cur_ins[70]
