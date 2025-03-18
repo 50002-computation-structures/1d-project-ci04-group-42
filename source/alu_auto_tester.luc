@@ -11,6 +11,7 @@ module alu_auto_tester (
     
     alu alu
     
+    //list out states
     enum States {
         RUN,
         STOP,
@@ -20,12 +21,12 @@ module alu_auto_tester (
     }
     
     const SIZE = 29
-    //const SEVEN_SEG_DIV = $is_sim() ? 3 : 16 // put 6 for sim, 16 on hardware
     const SLOW_CLOCK_DEFAULT_SPEED = $is_sim() ? 8 : 28 // put 8  for sim, 28 for hardware
     const CLK_FREQ = $is_sim() ? 1000 : 10000000
     
     sig slow_clock
     
+    //list of instructions
     const INSTRUCTION = {
         c{6b11,-31d10,32d2},c{6b11,32d15,32d3},c{6b11,32d10,32d1},c{6b11,32d0,32d5},  // division
         c{6b11,32d2147483647,32d1},c{6b11,32d10,32hFFFFFFFE},c{6b11,-31d7,-31d3},  // division
@@ -44,7 +45,8 @@ module alu_auto_tester (
         c{6b100011, 32hFFFFFFFF, 32d1}  // SAR (-1 >> 1 = -1)
         
     } 
-        
+    
+    //list of corresponding correct answers
     const CORRECT_ANS = {
         c{-31d5,0,0,0},c{32d5,0,0,0},c{32d10,0,0,0},c{32d0,1,0,0},   // division
         c{32d2147483647,0,0,0},c{32hFFFFFFFB,0,0,1},c{32d2,0,0,0},   // division
@@ -63,6 +65,7 @@ module alu_auto_tester (
         c{32hFFFFFFFF, 0, 0, 0}   // SAR: -1 >> 1 = -1        
     } 
     
+    //all signals
     sig cur_ins[70]
     sig cur_out[32]
     sig cur_v
@@ -80,8 +83,7 @@ module alu_auto_tester (
         edge_detector slow_clock_edge(#RISE(1), #FALL(0))
         button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
         .rst(rst) {
-            
-            
+            //initialize all dffs
             dff counter[SIZE]
             dff states[$width(States)](#INIT(States.IDLE)) //reset everything back to idle
             dff slow_clock_enable(#INIT(0))
@@ -91,20 +93,20 @@ module alu_auto_tester (
     }
     
  always {
-        // implement alu tester logic here
+        // implement alu auto tester logic here
+        
+        //default connection
         alu.a = 0
         alu.b = 0
         alu.alufn = 0
         io_led = 3x{{8h0}}
         io_segment = 0
         io_select = 4hF
-        
+        led = 0
         
         // condition the buttons, then take rising edges only
         io_button_cond.in = io_button
         io_button_edge.in = io_button_cond.out
-        led = 0
-        
         
         // connect dffs 
         counter.d = counter.q + 1 // always increment
@@ -113,9 +115,10 @@ module alu_auto_tester (
         pc.d=pc.q
         is_correct.d=is_correct.q
         
-        // signal connection
+        // signal connection for slow clock
         slow_clock = counter.q[SLOW_CLOCK_DEFAULT_SPEED] // pointed based on the bit of the counter 
         
+        //assign input to clock edge detector depending on value of slow_clock_enable
         case (slow_clock_enable.q){
             0:
                 slow_clock_edge.in = 0 // always don't increment or decrement
@@ -125,6 +128,7 @@ module alu_auto_tester (
                 slow_clock_edge.in = 0
         }
         
+        //define state conditions and transitions
         case (states.q){
             States.IDLE:
             
@@ -246,7 +250,7 @@ module alu_auto_tester (
                 led[1]=1
             }
         }
-        else{ //wrong (incorrect value AND overflow not supposed to happen)
+        else{ //wrong (incorrect value AND not overflow)
             is_correct.d=0
             led[2]=1
         }

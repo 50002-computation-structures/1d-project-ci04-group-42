@@ -2,18 +2,14 @@ module alu_manual_tester (
     input clk,              // 100MHz clock
     input rst,            // reset button (active low)
     output led[8],          // 8 user controllable LEDs
-    //input usb_rx,            // USB->Serial input
-    //output usb_tx,           // USB->Serial output
     output io_led[3][8],     // LEDs on IO Shield
     output io_segment[8],        // 7-segment LEDs on IO Shield
     output io_select[4],        // Digit select on IO Shield
     input io_button[5],      // 5 buttons on IO Shield
     input io_dip[3][8]       // DIP switches on IO Shield
 ) {
-    
-                   // reset signal
-    
-    
+
+    //list out states
     enum States {
         A1,
         A2,
@@ -27,15 +23,13 @@ module alu_manual_tester (
     const CLK_FREQ = $is_sim() ? 1000 : 10000000 // put 1000 only for sim, 10M on hardware
     
     alu alu
-    
-    
+
     .clk(clk) {
-        // The reset conditioner is used to synchronize the reset signal to the FPGA
-        // clock. This ensures the entire FPGA comes out of reset at the same time.
-        
+        //edge detector and button conditioner for io buttons
         edge_detector io_button_edge[5](#RISE(5x{{1}}), #FALL(5x{{0}}))
         button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
         .rst(rst) {
+            //initialize all dffs
             dff states[$width(States)](#INIT(States.A1))
             dff a[32](#INIT(0))
             dff b[32](#INIT(0))
@@ -58,8 +52,7 @@ module alu_manual_tester (
         io_button_cond.in = io_button
         io_button_edge.in = io_button_cond.out
 
-       
-        
+
         // connect dffs 
         states.d = states.q
         a.d=a.q
@@ -68,23 +61,24 @@ module alu_manual_tester (
 
         case (states.q){
             States.A1:
-                led[1]=1
-                io_led=io_dip
-                if (io_button_edge.out[4]){
+                led[1]=1 //to indicate current state / input selection
+                
+                io_led=io_dip //easier see which dips are on
+                if (io_button_edge.out[4]){ //if 'next' button is clicked, move to next state
                     a.d[15:0] = c{io_dip[1],io_dip[0]}
                     states.d = States.A2
                 }
 
             States.A2:
-                led[2]=1
-                
+                led[2]=1 
+            
                 io_led=io_dip 
                 
                 if (io_button_edge.out[4]){
                     a.d[31:16] = c{io_dip[1],io_dip[0]}
                     states.d = States.B1
                 }
-                else if (io_button_edge.out[3]){
+                else if (io_button_edge.out[3]){ //if 'prev' button is clicked, move to previous state
                     states.d = States.A1
                 }
             
@@ -120,20 +114,18 @@ module alu_manual_tester (
                 else if (io_button_edge.out[3]){
                     states.d = States.B2
                 }
-                
-            
-                // end of State.ALUFN
-            
-            
+
             States.ANSWER1:
                 led[6] = 1
                 alu.a=a.q
                 alu.b=b.q 
                 alu.alufn = alufn.q
                 
-                io_led[0]=alu.out[7:0]
+                //display first 16 bits of output
+                io_led[0]=alu.out[7:0] 
                 io_led[1]=alu.out[15:8]
-                io_led[2][2:0]=c{alu.z,alu.v,alu.n}
+                
+                io_led[2][2:0]=c{alu.z,alu.v,alu.n} //display z v n
                 if (io_button_edge.out[4]){
                     states.d = States.ANSWER2
                 }
@@ -147,8 +139,10 @@ module alu_manual_tester (
                 alu.b=b.q 
                 alu.alufn = alufn.q
                 
+                //display next 16 bits of output
                 io_led[0]=alu.out[23:16]
                 io_led[1]=alu.out[31:24]
+                
                 io_led[2][2:0]=c{alu.z,alu.v,alu.n}
                 if (io_button_edge.out[4]){
                     states.d = States.A1

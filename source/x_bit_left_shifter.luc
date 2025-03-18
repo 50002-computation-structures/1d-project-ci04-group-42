@@ -3,19 +3,19 @@ SIZE = 32 : SIZE>0,
 SHIFT = 8 : SHIFT > -1 & SHIFT < SIZE)
 (
     input a[SIZE],  
-    input do_shift,  
+    input do_shift,  // signal to perform the shift or not
     input pad,
     output out[SIZE]
     
     
 ) {
-    mux2 shift_unit[SIZE]
-    sig shifted_pattern[SIZE]
+    mux2 shift_unit[SIZE] // 32 mux_2 modules which decide whether each bit is shifted (1) or not (0)
+    sig shifted_pattern[SIZE] // store the shifted binary number
     always {
-        shift_unit.s0 = SIZEx{do_shift}//mux2.s0 = SIZEx{do_shift}
-        shifted_pattern = c{a[SIZE-1-SHIFT:0],SHIFTx{pad}}
+        shift_unit.s0 = SIZEx{do_shift} // assigning values of s0 
+        shifted_pattern = c{a[SIZE-1-SHIFT:0],SHIFTx{pad}} // concatenating the shifted + padding
         repeat (i,SIZE){
-            shift_unit.in[i]= c{shifted_pattern[i],a[i]}
+            shift_unit.in[i]= c{shifted_pattern[i],a[i]} //assign input of all 32 muxes
         }
         
         out = shift_unit.out

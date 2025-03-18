@@ -13,12 +13,12 @@ module adder #(
     sig xb[SIZE]
     
     always {
-        xb = b ^ SIZEx{alufn[0]} //why take the least significant bit ???
+        // implement adder/subtractor unit logic here
+        xb = b ^ SIZEx{alufn[0]} 
         rca.a = a
         rca.b = xb
         rca.cin = alufn[0] // 1: cin = 1 for subtraction
-        // implement adder/subtractor unit logic here
-        
+
         out = rca.s
         z = ~|rca.s
         v = (~a[SIZE-1] & ~xb[SIZE-1] & rca.s[SIZE-1]) | (a[SIZE-1] & xb[SIZE-1] & ~rca.s[SIZE-1]) 
