@@ -133,40 +133,42 @@ module alu_auto_tester (
             States.IDLE:
             
                 // this takes precedence
-                // if slow clock rising edge, go to UPDATE state
+                // if slow clock rising edge, go to NEXT state to update current index
             if (slow_clock_edge.out){
             states.d=States.NEXT
                 }
 
-                //if button[1] is pressed
+                //if button[1] is pressed, either resume or pause operations
             else if (io_button_edge.out[1]){
                 if (~|slow_clock_enable.q){
-                    states.d=States.RUN
+                    states.d=States.RUN 
                     }
                 
                 else {
                     states.d=States.STOP
                 }
             }
+                //if paused and button[4] pressed, go to next
             else if (io_button_edge.out[4]){
                 if (~|slow_clock_enable.q){
                         states.d=States.NEXT
                     }
                 }
+                //if paused and button[3] pressed, go to prev
             else if (io_button_edge.out[3]){
                 if (~|slow_clock_enable.q){
                         states.d=States.PREV
                     }
                 }
             
-            else if (~is_correct.q){
+            else if (~is_correct.q){ //stop if encounter wrong output
                 if (slow_clock_enable.q){
                     states.d=States.STOP
                 }
                
             }
             
-            else if (~io_dip[2][7]){
+            else if (~io_dip[2][7]){ //pause slow clock if switch to manual tester
                 states.d=States.STOP
                 }
             
@@ -176,10 +178,10 @@ module alu_auto_tester (
                     pc.d=pc.q+1
                 }
             else{
-                pc.d=0
+                pc.d=0 //move to first test case if current index is last index (cyclic)
                 }
  
-                //back to idle
+                
                 
             states.d=States.IDLE
 
@@ -189,7 +191,7 @@ module alu_auto_tester (
                     pc.d=pc.q-1
                 }
             else{
-                pc.d=d44
+                pc.d=d44 //move to last test case if current index is 0 (cyclic)
                 }
             states.d=States.IDLE
             

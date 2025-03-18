@@ -19,6 +19,7 @@ module alchitry_top (
         reset_conditioner reset_cond
     }
 
+    //initialize both auto tester and manual tester
     alu_auto_tester alu_auto(.clk(clk), .rst(rst), .io_button(io_button), .io_dip(io_dip))
     alu_manual_tester alu_manual(.clk(clk), .rst(rst), .io_button(io_button), .io_dip(io_dip))
     
@@ -28,14 +29,15 @@ module alchitry_top (
  
         usb_tx = usb_rx          // loop serial port
         
-        if (io_dip[2][7]){
-        // to test ALU 
+        if (io_dip[2][7]){ //dedicate last dip switch to switch between auto and manual tester
+        // auto tester 
             io_segment = alu_auto.io_segment
             io_select = alu_auto.io_select         
             io_led = alu_auto.io_led
             led=alu_auto.led
         }
         else{
+        //manual tester
             io_segment = alu_manual.io_segment
             io_select = alu_manual.io_select         
             io_led = alu_manual.io_led
