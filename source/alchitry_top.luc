@@ -17,32 +17,54 @@ module alchitry_top (
         // The reset conditioner is used to synchronize the reset signal to the FPGA
         // clock. This ensures the entire FPGA comes out of reset at the same time.
         reset_conditioner reset_cond
+        
+        //edge detectors
+        
+        //detects both falling and rising edge
+        edge_detector dip_edge_detector[3][8] (#RISE(3x{{8x{{1}}}}), #FALL(3x{{8x{{1}}}}))
+        
+        .rst(rst){
+            game_regfiles regfiles
+        }
     }
 
-    //initialize both auto tester and manual tester
-    alu_auto_tester alu_auto(.clk(clk), .rst(rst), .io_button(io_button), .io_dip(io_dip))
-    alu_manual_tester alu_manual(.clk(clk), .rst(rst), .io_button(io_button), .io_dip(io_dip))
     
+   
     always {
         reset_cond.in = ~rst_n  // input raw inverted reset signal
         rst = reset_cond.out    // conditioned reset
  
         usb_tx = usb_rx          // loop serial port
         
-        if (io_dip[2][7]){ //dedicate last dip switch to switch between auto and manual tester
-        // auto tester 
-            io_segment = alu_auto.io_segment
-            io_select = alu_auto.io_select         
-            io_led = alu_auto.io_led
-            led=alu_auto.led
-        }
-        else{
-        //manual tester
-            io_segment = alu_manual.io_segment
-            io_select = alu_manual.io_select         
-            io_led = alu_manual.io_led
-            led=alu_manual.led
-        }
+        //default outputs
+        led = 8b0
+        io_led = 3x{{8b0}}
+        io_segment = 7b1111111
+        io_select = 4hF
+        
+        dip_edge_detector.in = io_dip
+        
+        regfiles.wa = d4 
+        regfiles.we = b1 
+        regfiles.data = 32b11
+        regfiles.ra1 = d4 
+        regfiles.ra2 = d3 
+        
+        io_led[0] = regfiles.game_leds [7:0]
+        io_led[1] = regfiles.game_leds [15:8]
+        io_led[2] = regfiles.game_leds [23:16]
+        
+        io_led[0] = regfiles.rd2 [7:0]
+        io_led[1] = regfiles.rd2 [15:8]
+        io_led[2] = regfiles.rd2 [23:16]
+        
+        led[1:0] = regfiles.indicator_led
+        
+        led[3:2] = regfiles.bomb_color_led
+        
+        
+        
+        
  
     }
 }

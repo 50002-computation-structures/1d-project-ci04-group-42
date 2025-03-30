@@ -1,0 +1,104 @@
+module game_regfiles (
+    input clk,  // clock
+    input rst,  // reset
+    input wa[4], // write address
+    input we, // write enable
+    input data[32], // data in
+    
+    input ra1[4], // read address port 1
+    input ra2[4], // read address port 2
+    output rd1[32], // read data port 1
+    output rd2[32], // read data port 1
+    
+    // states
+    output game_leds[24],
+    output indicator_led[2],
+    output score_led[32],
+    output bomb_color_led[2],
+    output sevseg2_binary[32]
+) {
+    .clk(clk){
+        .rst(rst){
+            dff lights[32](#INIT(0))
+            dff indicator_light[32](#INIT(0))
+            dff score[32](#INIT(0))
+            dff sevseg2[32](#INIT(0))
+            dff bomb_color[32](#INIT(0))
+            dff high_score[32](#INIT(0))
+            dff time_limit[32](#INIT(d10))
+            dff current_light_index[32](#INIT(0))
+            dff temp_storage[32](#INIT(0))
+            dff branch_storage[32](#INIT(0))
+        }
+    }
+    
+    always {
+        
+        //write port
+        if (we){
+            case(wa){
+                d0 : lights.d = data
+                d1 : indicator_light.d = data
+                d2 : score.d = data
+                d3 : sevseg2.d = data
+                d4 : bomb_color.d = data
+                d5 : high_score.d = data
+                d6 : time_limit.d = data
+                d7 : current_light_index.d = data
+                d8 : temp_storage.d = data
+                d9 : branch_storage.d = data
+            }
+        }
+        
+        
+        //read port a
+        case(ra1){
+            d0 : rd1 = lights.q
+            d1 : rd1 = indicator_light.q
+            d2 : rd1 = score.q
+            d3 : rd1 = sevseg2.q
+            d4 : rd1 = bomb_color.q
+            d5 : rd1 = high_score.q
+            d6 : rd1 = time_limit.q
+            d7 : rd1 = current_light_index.q 
+            d8 : rd1 = temp_storage.q 
+            d9 : rd1 = branch_storage.q
+            default : rd1 = 0
+        }
+        
+        //read port b
+        case(ra2){
+            d0 : rd2 = lights.q
+            d1 : rd2 = indicator_light.q
+            d2 : rd2 = score.q
+            d3 : rd2 = sevseg2.q
+            d4 : rd2 = bomb_color.q
+            d5 : rd2 = high_score.q
+            d6 : rd2 = time_limit.q
+            d7 : rd2 = current_light_index.q 
+            d8 : rd2 = temp_storage.q 
+            d9 : rd2 = branch_storage.q
+            default : rd2 = 0
+        }
+
+        //encoding format : c7c7o7  c6c6o6 ....... c0c0o0
+        //o signifies on/off, c signifies color with same encoding as bomb color
+        game_leds = lights.q[23:0]
+        
+        //select 2 lsb's (b00 = off, red ; b01 = off, green ; b10 = on, red ; b11 = on, green)
+        indicator_led = indicator_light.q[1:0] 
+        
+        //binary valueu of score, displayed on the first 2 digits of the seven segment
+        score_led = score.q
+        
+        //indicates bomb color: Blue = b00, White = b01, Yellow = b10, Orange = b11
+        bomb_color_led = bomb_color.q[1:0]
+        
+        //displayed on the next 2 digits of the seven segment
+        //timer when game is running & indicator light = green ,on
+        //high score otherwise & indicator light = red, on
+        sevseg2_binary = sevseg2.q
+        
+ 
+    }
+}

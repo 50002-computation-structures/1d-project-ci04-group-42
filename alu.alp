@@ -50,12 +50,6 @@
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/alu_manual_tester.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
                     "path": "source/x_bit_left_shifter.luc"
                 }
             },
@@ -128,13 +122,13 @@
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/alu_auto_tester.luc"
+                    "path": "source/divider.luc"
                 }
             },
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/divider.luc"
+                    "path": "source/game_regfiles.luc"
                 }
             }
         ],
