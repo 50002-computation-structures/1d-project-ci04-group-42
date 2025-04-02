@@ -130,6 +130,18 @@
                     "type": "DiskFile",
                     "path": "source/game_regfiles.luc"
                 }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/game_cu.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/counter.luc"
+                }
             }
         ],
         "constraintFiles": [

@@ -1,0 +1,545 @@
+module game_cu (
+    input clk,  // clock
+    input rst,  // reset
+    
+    //signals
+    input slow_game_clock_rise,
+    input decrease_timer,
+    
+    input regfile_rd2[32], //direct reading of regfile data from rd2
+    
+    //user inputs
+    input start_button_pressed,
+    input button_0_pressed,
+    input button_1_pressed,
+    input button_2_pressed,
+    input button_3_pressed,
+    input button_4_pressed,
+    input button_5_pressed,
+    input button_6_pressed,
+    input button_7_pressed,
+    
+    output alufn[6],
+    output asel[2],
+    output bsel[2],
+    output wdsel[2],
+    output regfile_wa[4],
+    output regfile_ra1[4],
+    output regfile_ra2[4],
+    output regfile_we,
+    output constant[32],
+    output debug[4]
+) {
+    
+    enum GameStates {
+        ////STARTING SEQUENCE
+        START,
+        RESET_SCORE, 
+        SET_TEMP_STORAGE, 
+        TURN_ON_INDICATOR_FLASH_GREEN, 
+        TURN_OFF_INDICATOR_LIGHT,
+        REDUCE_TEMP_STORAGE, 
+        CHECK_TEMP_STORAGE_0,
+        BRANCH_COUNT_FLASH, 
+        TURN_ON_START_LIGHT_GREEN,
+        SET_RANDOM_LIGHTS, 
+        SET_SEVSEG2_TIMER,
+        
+        ////MAIN GAME SEQUENCE
+        IDLE, 
+        //PER ROUND TIMER SEQUENCE
+        DECREASE_TIMER,
+        CHECK_TIMER_0,
+        BRANCH_TIMER,
+        //PER ROUND AND USER INPUT PROCEDURE
+        SET_CURRENT_LIGHT_INDEX_0, 
+        SET_CURRENT_LIGHT_INDEX_3,
+        SET_CURRENT_LIGHT_INDEX_6,
+        SET_CURRENT_LIGHT_INDEX_9,
+        SET_CURRENT_LIGHT_INDEX_12,
+        SET_CURRENT_LIGHT_INDEX_15, 
+        SET_CURRENT_LIGHT_INDEX_18,
+        SET_CURRENT_LIGHT_INDEX_21,
+        CHECK_CORRECT_PAIR,
+        BRANCH_PAIR,
+        CHECK_COLOR_BOMB_COLOR,
+        BRANCH_CHECK_BOMB,
+        INCREASE_SCORE,
+        TURN_OFF_LIGHT,
+        CHECK_LIGHTS_OFF,
+        BRANCH_CHECK_LIGHTS_OFF,
+        //PROCEED TO NEXT ROUND PROCEDURE
+        INCREASE_TEMP_STORAGE,
+        CHECK_TEMP_STORAGE_5,
+        BRANCH_CHG_BOMB,
+        RESET_TEMP_STORAGE_0,
+        SET_BOMB_COLOR,
+        CHECK_TIME_LIMIT_5,
+        BRANCH_DECREASE_TIME_LIMIT,
+        DECREASE_TIME_LIMIT,
+        
+        ////GAME OVER SEQUENCE
+        TURN_ALL_LIGHTS_OFF,
+        SET_INDICATOR_LIGHT_TO_RED,
+        CHECK_SCORE_HIGH_SCORE,
+        BRANCH_HIGH_SCORE,
+        SET_NEW_HIGH_SCORE,
+        SET_SEVSEG2_HIGH_SCORE
+    }
+    
+    dff game_fsm[$width(GameStates)](#INIT(GameStates.START), .clk(clk), .rst(rst))
+    
+    always {
+        
+        // standard setting unless otherwise overwritten by each case 
+        alufn = 0
+        asel = 0 
+        bsel = 0
+        regfile_we = 0
+        regfile_wa = d6 
+        regfile_ra1 = d0
+        regfile_ra2 = d0
+        wdsel = 0
+        constant = 0
+        
+        debug = b0000
+        
+        
+        game_fsm.d = game_fsm.q
+        
+        case(game_fsm.q){
+            ////STARTING SEQUENCE
+            GameStates.START:
+                if (start_button_pressed){
+                    game_fsm.d=GameStates.RESET_SCORE
+                }
+             
+            GameStates.RESET_SCORE:
+                regfile_we = 1
+                regfile_wa = d2 
+                wdsel = b11
+                game_fsm.d=GameStates.SET_TEMP_STORAGE
+             
+            GameStates.SET_TEMP_STORAGE:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1
+                regfile_wa = d8 
+                wdsel = b00 
+                constant = 32d3
+                game_fsm.d=GameStates.TURN_ON_INDICATOR_FLASH_GREEN
+            
+            GameStates.TURN_ON_INDICATOR_FLASH_GREEN:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1
+                regfile_wa = d1 
+                wdsel = b00 
+                constant = c{30b0,2b11}
+                if (slow_game_clock_rise){
+                    game_fsm.d=GameStates.TURN_OFF_INDICATOR_LIGHT
+                    }
+            debug = d1
+            GameStates.TURN_OFF_INDICATOR_LIGHT:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1
+                regfile_wa = d1 
+                wdsel = b00 
+                constant = c{30b0,2b01}
+                if (slow_game_clock_rise){
+                    game_fsm.d=GameStates.REDUCE_TEMP_STORAGE
+                }
+            
+            GameStates.REDUCE_TEMP_STORAGE:
+                alufn = b000001 //'SUB'
+                asel = b00
+                bsel = b11
+                regfile_ra1 = d8
+                regfile_we = b1
+                regfile_wa = d8 
+                wdsel = b00 
+                game_fsm.d=GameStates.CHECK_TEMP_STORAGE_0
+            
+            GameStates.CHECK_TEMP_STORAGE_0:
+                alufn = b110011 //CMPEQ
+                asel = b00
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00 
+                regfile_ra1 = d8 
+                constant = 32d0
+                game_fsm.d = GameStates.BRANCH_COUNT_FLASH
+            
+            GameStates.BRANCH_COUNT_FLASH:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.TURN_ON_START_LIGHT_GREEN
+                }
+                else{
+                    game_fsm.d = GameStates.TURN_ON_INDICATOR_FLASH_GREEN
+                }
+            
+            GameStates.TURN_ON_START_LIGHT_GREEN:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1
+                regfile_wa = d1 
+                wdsel = b00 
+                constant = c{30b0,2b11}
+                game_fsm.d=GameStates.SET_RANDOM_LIGHTS
+            
+            GameStates.SET_RANDOM_LIGHTS:
+                regfile_we = b1 
+                regfile_wa = d0 
+                wdsel = b01 
+                game_fsm.d = GameStates.SET_SEVSEG2_TIMER
+            
+            GameStates.SET_SEVSEG2_TIMER:
+                alufn = b011010 //'A'
+                asel = b00
+                regfile_we = b1
+                regfile_wa = d3 
+                wdsel = b00 
+                regfile_ra1 = d6
+                game_fsm.d=GameStates.IDLE
+                
+            ////MAIN GAME SEQUENCE
+            GameStates.IDLE:
+                if (decrease_timer){
+                    game_fsm.d=GameStates.DECREASE_TIMER
+                }
+            
+                else if (button_0_pressed){
+                        game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_0
+                }
+            
+                else if (button_1_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_3
+                    }
+                else if (button_2_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_6
+                    }
+                else if (button_3_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_9
+                    }
+                else if (button_4_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_12
+                    }
+                else if (button_5_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_15
+                    }
+                else if (button_6_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_18
+                    }
+                else if (button_7_pressed){
+                            game_fsm.d=GameStates.SET_CURRENT_LIGHT_INDEX_21
+                    }
+            //PER ROUND TIMER SEQUENCE
+            GameStates.DECREASE_TIMER:
+                alufn = b000001 //'SUB'
+                asel = b00 
+                bsel = b11 
+                regfile_we = b1 
+                regfile_wa = d3 
+                wdsel = b00 
+                regfile_ra1 = d3
+                game_fsm.d = GameStates.CHECK_TIMER_0
+            
+            GameStates.CHECK_TIMER_0:
+                alufn = b110011 //CMPEQ
+                asel = b00
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00 
+                regfile_ra1 = d3 
+                constant = 32b0
+                game_fsm.d = GameStates.BRANCH_TIMER
+            
+            GameStates.BRANCH_TIMER:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.TURN_ALL_LIGHTS_OFF
+                }
+                else{
+                    game_fsm.d = GameStates.IDLE
+                }
+            
+            //PER ROUND AND USER INPUT PROCEDURE
+            GameStates.SET_CURRENT_LIGHT_INDEX_0:
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b11 
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_3:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d3
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_6:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d6
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_9:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d9
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_12:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d12
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_15:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d15
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_18:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d18
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.SET_CURRENT_LIGHT_INDEX_21:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d7 
+                wdsel = b00 
+                constant = 32d21
+                game_fsm.d = GameStates.CHECK_CORRECT_PAIR
+            
+            GameStates.CHECK_CORRECT_PAIR:
+                alufn = b110011 //CMPEQ
+                asel = b01
+                bsel = b11
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00  
+                game_fsm.d = GameStates.BRANCH_PAIR
+            
+            GameStates.BRANCH_PAIR:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.CHECK_COLOR_BOMB_COLOR
+                }
+                else{
+                    game_fsm.d = GameStates.TURN_ALL_LIGHTS_OFF
+                }
+            
+            GameStates.CHECK_COLOR_BOMB_COLOR:
+                alufn = b110011 //CMPEQ
+                asel = b10
+                bsel = b00
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00
+                regfile_ra2 = d4
+                game_fsm.d = GameStates.BRANCH_CHECK_BOMB
+            
+            GameStates.BRANCH_CHECK_BOMB:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.TURN_ALL_LIGHTS_OFF
+                }
+                else{
+                    game_fsm.d = GameStates.INCREASE_SCORE
+                }
+            
+            GameStates.INCREASE_SCORE:
+                alufn = b000000 // ADD
+                asel = b00 
+                bsel = b11 
+                regfile_we = b1 
+                regfile_wa = d2
+                wdsel = b00 
+                regfile_ra1 = d2
+                game_fsm.d = GameStates.TURN_OFF_LIGHT
+            
+            GameStates.TURN_OFF_LIGHT:
+                alufn = b010110 // XOR
+                asel = b00 
+                bsel = b10 
+                regfile_we = b1 
+                regfile_wa = d0
+                wdsel = b00 
+                regfile_ra1 = d0
+                game_fsm.d = GameStates.CHECK_LIGHTS_OFF
+            
+            GameStates.CHECK_LIGHTS_OFF:
+                alufn = b110011 //CMPEQ
+                asel = b11
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00
+                constant = 32d0
+                game_fsm.d = GameStates.BRANCH_CHECK_LIGHTS_OFF
+            
+            GameStates.BRANCH_CHECK_LIGHTS_OFF:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.INCREASE_TEMP_STORAGE
+                }
+                else{
+                    game_fsm.d = GameStates.IDLE
+                }
+            
+            //PROCEED TO NEXT ROUND PROCEDURE
+            GameStates.INCREASE_TEMP_STORAGE:
+                alufn = b000000 // ADD
+                asel = b00 
+                bsel = b11 
+                regfile_we = b1 
+                regfile_wa = d8
+                wdsel = b00 
+                regfile_ra1 = d8
+                game_fsm.d = GameStates.CHECK_TEMP_STORAGE_5
+            
+            GameStates.CHECK_TEMP_STORAGE_5:
+                alufn = b110011 //CMPEQ
+                asel = b00
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00
+                regfile_ra1 = d8
+                constant = 32d5
+                game_fsm.d = GameStates.BRANCH_CHG_BOMB
+            
+            GameStates.BRANCH_CHG_BOMB:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.RESET_TEMP_STORAGE_0
+                }
+                else{
+                    game_fsm.d = GameStates.SET_RANDOM_LIGHTS
+                } 
+            
+            GameStates.RESET_TEMP_STORAGE_0:
+                regfile_we = b1 
+                regfile_wa = d8 
+                wdsel = b11
+                game_fsm.d = GameStates.SET_BOMB_COLOR
+            
+            GameStates.SET_BOMB_COLOR:
+                regfile_we = b1 
+                regfile_wa = d4 
+                wdsel = b10 
+                game_fsm.d = GameStates.CHECK_TIME_LIMIT_5
+            
+            GameStates.CHECK_TIME_LIMIT_5:
+                alufn = b110011 //CMPEQ
+                asel = b00
+                bsel = b01
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00
+                regfile_ra1 = d6
+                constant = 32d5
+                game_fsm.d = GameStates.BRANCH_DECREASE_TIME_LIMIT
+            
+            GameStates.BRANCH_DECREASE_TIME_LIMIT:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.SET_RANDOM_LIGHTS
+                }
+                else{
+                    game_fsm.d = GameStates.DECREASE_TIME_LIMIT
+                } 
+            
+            GameStates.DECREASE_TIME_LIMIT:
+                alufn = b000001 //'SUB'
+                asel = b00 
+                bsel = b11 
+                regfile_we = b1 
+                regfile_wa = d6 
+                wdsel = b00 
+                regfile_ra1 = d6
+                game_fsm.d = GameStates.SET_RANDOM_LIGHTS
+            
+            ////GAME OVER SEQUENCE
+            GameStates.TURN_ALL_LIGHTS_OFF:
+                regfile_we = b1 
+                regfile_wa = d0 
+                wdsel = b11 
+                game_fsm.d = GameStates.SET_INDICATOR_LIGHT_TO_RED
+            
+            GameStates.SET_INDICATOR_LIGHT_TO_RED:
+                alufn = b011100 //'B'
+                bsel = b01
+                regfile_we = b1
+                regfile_wa = d1 
+                wdsel = b00 
+                constant = c{30b0,2b10}
+                game_fsm.d=GameStates.CHECK_SCORE_HIGH_SCORE
+            
+            GameStates.CHECK_SCORE_HIGH_SCORE:
+                alufn = b110101 //'CMPLT'
+                asel = b00 
+                bsel = b00 
+                regfile_we = b1 
+                regfile_wa = d9 
+                wdsel = b00 
+                regfile_ra1 = d5 
+                regfile_ra2 = d2 
+                game_fsm.d=GameStates.BRANCH_HIGH_SCORE
+            
+            GameStates.BRANCH_HIGH_SCORE:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.SET_NEW_HIGH_SCORE
+                }
+                else{
+                    game_fsm.d = GameStates.SET_SEVSEG2_HIGH_SCORE
+                } 
+            
+            GameStates.SET_NEW_HIGH_SCORE:
+                alufn = b011010 //'A'
+                asel = b00
+                regfile_we = b1
+                regfile_wa = d5 
+                wdsel = b00 
+                regfile_ra1 = d2
+                game_fsm.d=GameStates.SET_SEVSEG2_HIGH_SCORE
+            
+            GameStates.SET_SEVSEG2_HIGH_SCORE:
+                alufn = b011010 //'A'
+                asel = b00
+                regfile_we = b1
+                regfile_wa = d3 
+                wdsel = b00 
+                regfile_ra1 = d5
+                game_fsm.d=GameStates.START
+        
+        }
+    }
+}

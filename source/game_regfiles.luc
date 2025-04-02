@@ -15,17 +15,19 @@ module game_regfiles (
     output indicator_led[2],
     output score_led[32],
     output bomb_color_led[2],
-    output sevseg2_binary[32]
+    output sevseg2_binary[32],
+    
+    output light_index[5]
 ) {
     .clk(clk){
         .rst(rst){
             dff lights[32](#INIT(0))
-            dff indicator_light[32](#INIT(0))
+            dff indicator_light[32](#INIT(32b10)) //initial to on, red
             dff score[32](#INIT(0))
             dff sevseg2[32](#INIT(0))
             dff bomb_color[32](#INIT(0))
             dff high_score[32](#INIT(0))
-            dff time_limit[32](#INIT(d10))
+            dff time_limit[32](#INIT(d10)) //initial time limit 10
             dff current_light_index[32](#INIT(0))
             dff temp_storage[32](#INIT(0))
             dff branch_storage[32](#INIT(0))
@@ -98,6 +100,8 @@ module game_regfiles (
         //timer when game is running & indicator light = green ,on
         //high score otherwise & indicator light = red, on
         sevseg2_binary = sevseg2.q
+        
+        light_index = current_light_index.q[4:0]
         
  
     }

@@ -12,19 +12,33 @@ module alchitry_top (
 ) {
     
     sig rst                 // reset signal
-     
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000
+    const SLOW_CLOCK = $is_sim() ? 9 : 21
+    const FAST_CLOCK = $is_sim() ? 7 : 21
+    sig i[5]
+    sig tes[6]
     .clk(clk) {
         // The reset conditioner is used to synchronize the reset signal to the FPGA
         // clock. This ensures the entire FPGA comes out of reset at the same time.
         reset_conditioner reset_cond
         
         //edge detectors
-        
+        edge_detector slow_clock_rise (#RISE(1), #FALL(0))
+        edge_detector fast_clock_rise (#RISE(1), #FALL(0))
         //detects both falling and rising edge
-        edge_detector dip_edge_detector[3][8] (#RISE(3x{{8x{{1}}}}), #FALL(3x{{8x{{1}}}}))
+        //edge_detector dip_edge_detector[3][8] (#RISE(3x{{8x{{1}}}}), #FALL(3x{{8x{{0}}}}))
+        
+        edge_detector button_edge_detector[5]
+        button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
         
         .rst(rst){
-            game_regfiles regfiles
+            //game_regfiles regfiles
+            game_cu cu
+            
+            counter slow_clock(#SIZE(1),#DIV(SLOW_CLOCK))
+            counter fast_clock(#SIZE(1),#DIV(FAST_CLOCK))
+            
+            
         }
     }
 
@@ -42,9 +56,34 @@ module alchitry_top (
         io_segment = 7b1111111
         io_select = 4hF
         
-        dip_edge_detector.in = io_dip
+        //button conditioners and edge detectors
+        io_button_cond.in = io_button
+        button_edge_detector.in= io_button_cond.out
+
+        slow_clock_rise.in=slow_clock.value
+        fast_clock_rise.in=fast_clock.value
+        //STILL DEBUGGING
+        //dip_edge_detector.in = io_dip
         
-        regfiles.wa = d4 
+        
+        
+        //cu test inputs 
+        cu.slow_game_clock_rise = slow_clock_rise.out
+        cu.decrease_timer = fast_clock_rise.out
+        cu.start_button_pressed = button_edge_detector.out [1]
+        cu.button_0_pressed = io_dip[0][0] || io_dip[0][1]
+        cu.button_1_pressed = io_dip[0][2] || io_dip[0][3]
+        cu.button_2_pressed = io_dip[0][4] || io_dip[0][5]
+        cu.button_3_pressed = io_dip[0][6] || io_dip[0][7]
+        cu.button_4_pressed = io_dip[1][0] || io_dip[1][1]
+        cu.button_5_pressed = io_dip[1][2] || io_dip[1][3]
+        cu.button_6_pressed = io_dip[1][4] || io_dip[1][5]
+        cu.button_7_pressed = io_dip[1][6] || io_dip[1][7]
+        cu.regfile_rd2 = 32b0
+        
+       
+        
+        /*regfiles.wa = d4 
         regfiles.we = b1 
         regfiles.data = 32b11
         regfiles.ra1 = d4 
@@ -60,8 +99,15 @@ module alchitry_top (
         
         led[1:0] = regfiles.indicator_led
         
-        led[3:2] = regfiles.bomb_color_led
+        led[3:2] = regfiles.bomb_color_led */
         
+        led[0] = slow_clock.value
+        led[1] = fast_clock.value
+        io_led[2][3:0]=cu.debug
+        i=d5
+        tes = 6b0
+        tes[i]=1
+        io_led[0]=tes^b111111
         
         
         
