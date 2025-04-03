@@ -202,6 +202,12 @@
                     "type": "Component",
                     "path": "Miscellaneous/bin_to_dec.luc"
                 }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/all_safe_lights_off.luc"
+                }
             }
         ],
         "constraintFiles": [

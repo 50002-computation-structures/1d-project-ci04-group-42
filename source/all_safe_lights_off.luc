@@ -1,0 +1,35 @@
+module all_safe_lights_off (
+    //outputs a 1 if there is minimum one non bomb light that is still on
+    input light_decoded[24],
+    input current_bomb[2],
+    output have_safe_light_on
+) {
+    always {
+        have_safe_light_on=0
+        
+        if (light_decoded[0] & (|(light_decoded[2:1]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[3] & (|(light_decoded[5:4]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[6] & (|(light_decoded[8:7]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[9] & (|(light_decoded[11:10]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[12] & (|(light_decoded[14:13]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[15] & (|(light_decoded[17:16]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[18] & (|(light_decoded[20:19]-current_bomb))){
+            have_safe_light_on = 1
+        }
+        if (light_decoded[21] & (|(light_decoded[23:22]-current_bomb))){
+            have_safe_light_on = 1
+        }
+    }
+}

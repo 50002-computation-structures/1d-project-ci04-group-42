@@ -37,6 +37,7 @@ module game_datapath(
     sig off_specific_index[32]
     
     alu game_alu
+    all_safe_lights_off all_safe_lights_off_checker
     
     .clk(clk){
         
@@ -92,21 +93,17 @@ module game_datapath(
         off_specific_index=32b0
         off_specific_index[i]=1
         
+        //drive the additional logic unit
+        all_safe_lights_off_checker.light_decoded = game_regfiles.game_leds
+        all_safe_lights_off_checker.current_bomb = game_regfiles.bomb_color_led
+        
         // asel mux
         case(game_cu.asel){
             b00  : input_alu_a = game_regfiles.rd1
             b01  : input_alu_a = c{31b0, game_regfiles.game_leds[i]} 
             b10  : input_alu_a = c{30b0,game_regfiles.game_leds[i+1+:2]} //selects color bits from i+2 to i+1
-            b11  :`input_alu_a = c{24b0, //select all on/off index of all button leds
-                    game_regfiles.game_leds[21],
-                    game_regfiles.game_leds[18],
-                    game_regfiles.game_leds[15],
-                    game_regfiles.game_leds[12],
-                    game_regfiles.game_leds[9],
-                    game_regfiles.game_leds[6],
-                    game_regfiles.game_leds[3],
-                    game_regfiles.game_leds[0]
-                                               }
+            b11  :`input_alu_a = c{24b0, //use the output from the additional logic unit
+                    all_safe_lights_off_checker.have_safe_light_on}
             default : 
                 input_alu_a = 0
         }
