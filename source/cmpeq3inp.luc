@@ -1,0 +1,65 @@
+module cmpeq3inp (
+    //returns 1 if no 2 input are exactly the same
+    //returns 0 if a pair of input are exactly the same
+    input in1[3],  
+    input in2[3],
+    input in3[3],
+    output out
+) {
+    boolean2 or12(#SIZE(3))
+    boolean2 orinv12(#SIZE(3))
+    boolean2 and12(#SIZE(3))
+    
+    boolean2 or13(#SIZE(3))
+    boolean2 orinv13(#SIZE(3))
+    boolean2 and13(#SIZE(3))
+    
+    boolean2 or23(#SIZE(3))
+    boolean2 orinv23(#SIZE(3))
+    boolean2 and23(#SIZE(3))
+    
+    
+   
+    always {
+        or12.a=in1
+        or12.b=in2
+        or12.alufn=b011110
+        
+        orinv12.a=~in1
+        orinv12.b=~in2
+        orinv12.alufn=b011110
+        
+        and12.a=or12.bool
+        and12.b=orinv12.bool
+        and12.alufn=b011000
+        
+        or13.a=in1
+        or13.b=in3
+        or13.alufn=b011110
+        
+        orinv13.a=~in1
+        orinv13.b=~in3
+        orinv13.alufn=b011110
+        
+        and13.a=or13.bool
+        and13.b=orinv13.bool
+        and13.alufn=b011000
+        
+        or23.a=in2
+        or23.b=in3
+        or23.alufn=b011110
+        
+        orinv23.a=~in2
+        orinv23.b=~in3
+        orinv23.alufn=b011110
+        
+        and23.a=or23.bool
+        and23.b=orinv23.bool
+        and23.alufn=b011000
+        
+        /*eq12 = (in1 || in2 ) && (~in1 || ~in2 )
+        eq13 = (in1 || in3 ) && (~in1 || ~in3 )
+        eq23 = (in2 || in3 ) && (~in2 || ~in3 )*/
+        out = (|and12.bool) && (|and13.bool) && (|and23.bool)
+    }
+}

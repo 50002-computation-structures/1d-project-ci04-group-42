@@ -1,0 +1,151 @@
+module game_datapath(
+    //user inputs
+    input start_button_pressed,
+    input button_0_pressed,
+    input button_1_pressed,
+    input button_2_pressed,
+    input button_3_pressed,
+    input button_4_pressed,
+    input button_5_pressed,
+    input button_6_pressed,
+    input button_7_pressed,
+    
+    input clk,  // clock
+    input rst,  // reset
+    
+    // output to LEDs/7segments
+    output game_leds[24],
+    output indicator_led[2],
+    output score_led[32],
+    output bomb_color_led[2],
+    output sevseg2_binary[32],
+        
+    // debug signals
+    output debug_general[4]
+) {
+    //constants
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000
+    const SLOW_CLOCK = $is_sim() ? 9 : 21
+    const FAST_CLOCK = $is_sim() ? 7 : 21
+    const RANDOM_CLOCK = $is_sim() ? 3 : 21
+    
+    
+    //temp variables
+    sig input_alu_a[32]
+    sig input_alu_b[32]
+    sig i[5]
+    sig off_specific_index[32]
+    
+    alu game_alu
+    
+    .clk(clk){
+        
+        counter slow_clock(#SIZE(1),#DIV(SLOW_CLOCK),.rst(rst))
+        counter fast_clock(#SIZE(1),#DIV(FAST_CLOCK),.rst(rst))
+        
+        edge_detector slow_clock_rise (#RISE(1), #FALL(0),.in(slow_clock.value))
+        edge_detector fast_clock_rise (#RISE(1), #FALL(0),.in(fast_clock.value))
+        .rst(rst){
+            
+            
+            game_cu game_cu(
+                .slow_game_clock_rise(slow_clock_rise.out),
+                .decrease_timer(fast_clock_rise.out),
+                .start_button_pressed(start_button_pressed),
+                .button_0_pressed(button_0_pressed),
+                .button_1_pressed(button_1_pressed),
+                .button_2_pressed(button_2_pressed),
+                .button_3_pressed(button_3_pressed),
+                .button_4_pressed(button_4_pressed),
+                .button_5_pressed(button_5_pressed),
+                .button_6_pressed(button_6_pressed),
+                .button_7_pressed(button_7_pressed)
+            
+        )
+        
+            game_regfiles game_regfiles(
+                .we(game_cu.regfile_we), 
+                .wa(game_cu.regfile_wa), 
+                .ra1(game_cu.regfile_ra1), 
+                .ra2(game_cu.regfile_ra2)
+            )
+            
+            randomizer_unit randomizer_unit(#RANDOM_CLOCK_DIV(RANDOM_CLOCK))
+            
+            bomb_unit bomb_unit(#RANDOM_CLOCK_DIV(RANDOM_CLOCK))
+        }
+        
+        
+        
+    }
+    always {
+       
+        
+        // bootstrap rd2 output to CU for convenient branching conditions
+        game_cu.regfile_rd2 = game_regfiles.rd2
+        
+        //assign sig i to regfile output light index
+        i = game_regfiles.light_index
+        
+        //prepare off specific index signal
+        //off_specific_index XOR game_leds = turn off light at current index
+        off_specific_index=32b0
+        off_specific_index[i]=1
+        
+        // asel mux
+        case(game_cu.asel){
+            b00  : input_alu_a = game_regfiles.rd1
+            b01  : input_alu_a = c{31b0, game_regfiles.game_leds[i]} 
+            b10  : input_alu_a = c{30b0,game_regfiles.game_leds[i+1+:2]} //selects color bits from i+2 to i+1
+            b11  :`input_alu_a = c{24b0, //select all on/off index of all button leds
+                    game_regfiles.game_leds[21],
+                    game_regfiles.game_leds[18],
+                    game_regfiles.game_leds[15],
+                    game_regfiles.game_leds[12],
+                    game_regfiles.game_leds[9],
+                    game_regfiles.game_leds[6],
+                    game_regfiles.game_leds[3],
+                    game_regfiles.game_leds[0]
+                                               }
+            default : 
+                input_alu_a = 0
+        }
+        
+        // bsel mux
+        case(game_cu.bsel){
+            b00 : input_alu_b = game_regfiles.rd2
+            b01 : input_alu_b = game_cu.constant
+            b10 : input_alu_b = off_specific_index
+            b11 : input_alu_b = 32d1
+            default: //necessary to init
+                input_alu_b = 0
+            
+        }
+        
+        // alu
+        game_alu.a = input_alu_a
+        game_alu.b = input_alu_b
+        game_alu.alufn = game_cu.alufn
+        
+        // wdsel mux
+        case (game_cu.wdsel){
+            b01 : game_regfiles.data = c{8b0,randomizer_unit.random_light_sequence}
+            b10 : game_regfiles.data = c{30b0,bomb_unit.random_bomb}
+            b11 : game_regfiles.data = 32b0
+            default : 
+                game_regfiles.data = game_alu.out
+        }
+        
+        
+        
+        game_leds = game_regfiles.game_leds
+        indicator_led = game_regfiles.indicator_led
+        score_led = game_regfiles.score_led
+        bomb_color_led = game_regfiles.bomb_color_led
+        sevseg2_binary = game_regfiles.sevseg2_binary
+        
+        
+        debug_general = game_cu.debug
+        
+    }
+}

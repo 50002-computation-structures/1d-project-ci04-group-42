@@ -142,6 +142,66 @@
                     "type": "Component",
                     "path": "Miscellaneous/counter.luc"
                 }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/game_datapath.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/randomizer_unit.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/cmpeq3inp.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/light_decoder_full.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/pn_gen.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/bomb_unit.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/multi_seven_seg.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/seven_seg.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/decoder.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/bin_to_dec.luc"
+                }
             }
         ],
         "constraintFiles": [

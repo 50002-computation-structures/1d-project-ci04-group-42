@@ -1,0 +1,32 @@
+module light_decoder_full (
+    //same as light_encoder, but instead of 4 buttons have 8 buttons which resembles actual game more
+    //STILL simulation specific, encoding might change
+    //ALSO might need confirm if can use the * operation of alchitry
+    input encoded[18],  
+    output out[24]
+) {
+    
+    sig c0[2]
+    sig c1[2]
+    sig c2[2]
+    
+    always {
+        //default values
+        c0=encoded[1:0]
+        c1=encoded[7:6]
+        c2=encoded[13:12]
+        out=24d0
+        
+        //if no lights are on, turn on first light
+        //basically, at least one light at all times
+        if (((~encoded[5])&&(~encoded[11])&&(~encoded[17]))||encoded[5]){ 
+            out[encoded[4:2]*3+:3]=c{c0,1}
+        }
+        if (encoded[11]){
+            out[encoded[10:8]*3+:3]=c{c1,1}
+        }
+        if (encoded[17]){
+            out[encoded[16:14]*3+:3]=c{c2,1}
+        }
+    }
+}

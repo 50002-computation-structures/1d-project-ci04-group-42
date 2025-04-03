@@ -13,8 +13,10 @@ module alchitry_top (
     
     sig rst                 // reset signal
     const CLK_FREQ = $is_sim() ? 1000 : 10000000
-    const SLOW_CLOCK = $is_sim() ? 9 : 21
-    const FAST_CLOCK = $is_sim() ? 7 : 21
+    const SEVEN_SEG_DIV = $is_sim() ? 3 : 16 // put 3 for sim, 16 for hardware
+    
+    //const SLOW_CLOCK = $is_sim() ? 9 : 21
+    //const FAST_CLOCK = $is_sim() ? 7 : 21
     sig i[5]
     sig tes[6]
     .clk(clk) {
@@ -23,8 +25,8 @@ module alchitry_top (
         reset_conditioner reset_cond
         
         //edge detectors
-        edge_detector slow_clock_rise (#RISE(1), #FALL(0))
-        edge_detector fast_clock_rise (#RISE(1), #FALL(0))
+        //edge_detector slow_clock_rise (#RISE(1), #FALL(0))
+        //edge_detector fast_clock_rise (#RISE(1), #FALL(0))
         //detects both falling and rising edge
         //edge_detector dip_edge_detector[3][8] (#RISE(3x{{8x{{1}}}}), #FALL(3x{{8x{{0}}}}))
         
@@ -33,16 +35,17 @@ module alchitry_top (
         
         .rst(rst){
             //game_regfiles regfiles
-            game_cu cu
+            //game_cu cu
+            game_datapath game_datapath
             
-            counter slow_clock(#SIZE(1),#DIV(SLOW_CLOCK))
-            counter fast_clock(#SIZE(1),#DIV(FAST_CLOCK))
-            
+            //counter slow_clock(#SIZE(1),#DIV(SLOW_CLOCK))
+            //counter fast_clock(#SIZE(1),#DIV(FAST_CLOCK))
+            multi_seven_seg seg(#DIV(SEVEN_SEG_DIV))
             
         }
     }
 
-    
+    bin_to_dec bin_to_dec_converter(#DIGITS(4))
    
     always {
         reset_cond.in = ~rst_n  // input raw inverted reset signal
@@ -60,15 +63,15 @@ module alchitry_top (
         io_button_cond.in = io_button
         button_edge_detector.in= io_button_cond.out
 
-        slow_clock_rise.in=slow_clock.value
-        fast_clock_rise.in=fast_clock.value
+        //slow_clock_rise.in=slow_clock.value
+        //fast_clock_rise.in=fast_clock.value
         //STILL DEBUGGING
         //dip_edge_detector.in = io_dip
         
         
         
         //cu test inputs 
-        cu.slow_game_clock_rise = slow_clock_rise.out
+        /*cu.slow_game_clock_rise = slow_clock_rise.out
         cu.decrease_timer = fast_clock_rise.out
         cu.start_button_pressed = button_edge_detector.out [1]
         cu.button_0_pressed = io_dip[0][0] || io_dip[0][1]
@@ -101,15 +104,85 @@ module alchitry_top (
         
         led[3:2] = regfiles.bomb_color_led */
         
-        led[0] = slow_clock.value
+        /* led[0] = slow_clock.value
         led[1] = fast_clock.value
         io_led[2][3:0]=cu.debug
         i=d5
         tes = 6b0
         tes[i]=1
-        io_led[0]=tes^b111111
+        io_led[0]=tes^b111111 */
         
+        game_datapath.start_button_pressed = button_edge_detector.out[1]
+        game_datapath.button_0_pressed = io_dip[0][0] || io_dip[0][1] || io_dip[0][2]
+        game_datapath.button_1_pressed = io_dip[0][3] || io_dip[0][4] || io_dip[0][5]
+        game_datapath.button_2_pressed = io_dip[0][6] || io_dip[0][7] || io_dip[1][0]
+        game_datapath.button_3_pressed = io_dip[1][3] || io_dip[1][2] || io_dip[1][1]
+        game_datapath.button_4_pressed = io_dip[1][6] || io_dip[1][5] || io_dip[1][4]
+        game_datapath.button_5_pressed = io_dip[2][1] || io_dip[2][0] || io_dip[1][7]
+        game_datapath.button_6_pressed = io_dip[2][4] || io_dip[2][3] || io_dip[2][2]
+        game_datapath.button_7_pressed = io_dip[2][7] || io_dip[2][6] || io_dip[2][5]
         
+        /*game_datapath.button_0_pressed = io_dip[0][0] || io_dip[0][1] 
+        game_datapath.button_1_pressed = io_dip[0][2] || io_dip[0][3] 
+        game_datapath.button_2_pressed = io_dip[0][4] || io_dip[0][5] 
+        game_datapath.button_3_pressed = io_dip[0][6] || io_dip[0][7] 
+        game_datapath.button_4_pressed = io_dip[1][0] || io_dip[1][1]
+        game_datapath.button_5_pressed = io_dip[1][2] || io_dip[1][3]
+        game_datapath.button_6_pressed = io_dip[1][4] || io_dip[1][5] 
+        game_datapath.button_7_pressed = io_dip[1][6] || io_dip[1][7] 
+        
+        if (game_datapath.game_leds[0]){
+            io_led[0][1:0]=game_datapath.game_leds[2:1]
+        }
+        if (game_datapath.game_leds[3]){
+            io_led[0][3:2]=game_datapath.game_leds[5:4]
+        }
+        if (game_datapath.game_leds[6]){
+            io_led[0][5:4]=game_datapath.game_leds[8:7]
+        }
+        if (game_datapath.game_leds[9]){
+            io_led[0][7:6]=game_datapath.game_leds[11:10]
+        }
+        if (game_datapath.game_leds[12]){
+            io_led[1][1:0]=game_datapath.game_leds[14:13]
+        }
+        if (game_datapath.game_leds[15]){
+            io_led[1][3:2]=game_datapath.game_leds[17:16]
+        }
+        if (game_datapath.game_leds[18]){
+            io_led[1][5:4]=game_datapath.game_leds[20:19]
+        }
+        if (game_datapath.game_leds[21]){
+            io_led[1][7:6]=game_datapath.game_leds[23:22]
+        }*/
+        io_led[0]=game_datapath.game_leds[7:0]
+        io_led[1]=game_datapath.game_leds[15:8]
+        io_led[2]=game_datapath.game_leds[23:16]
+        
+        if(game_datapath.indicator_led[1]){
+            led[game_datapath.indicator_led[0]]=1
+        }
+        
+        led[3:2] = game_datapath.bomb_color_led
+        
+        led[7:4] = game_datapath.sevseg2_binary[3:0]
+        
+        //seven segments
+        //update 7segments
+        seg.values = 4x{{4b0}} // default to all 0 first
+        bin_to_dec_converter.value = game_datapath.sevseg2_binary
+        seg.values = bin_to_dec_converter.digits
+       
+        /*io_led[0][2:0] = 3x{io_dip[0][0] || io_dip[0][1] || io_dip[0][2]}
+        io_led[0][5:3] = 3x{io_dip[0][3] || io_dip[0][4] || io_dip[0][5]}
+        io_led[0][7:6] = 2x{io_dip[0][6] || io_dip[0][7] || io_dip[1][0]}
+        io_led[1][0] = io_dip[0][6] || io_dip[0][7] || io_dip[1][0]
+        io_led[0][2:0] = 3x{io_dip[0][0] || io_dip[0][1] || io_dip[0][2]}
+        io_led[0][2:0] = 3x{io_dip[0][0] || io_dip[0][1] || io_dip[0][2]}
+        io_led[0][2:0] = 3x{io_dip[0][0] || io_dip[0][1] || io_dip[0][2]}*/
+        
+        io_segment = ~seg.seg
+        io_select = ~seg.sel
         
  
     }

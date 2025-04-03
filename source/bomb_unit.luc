@@ -1,0 +1,42 @@
+module bomb_unit #(
+    RANDOM_CLOCK_DIV ~ 10
+)(
+    input clk,  // clock
+    input rst,  // reset
+    output random_bomb[2]
+) {
+    const GENERATE_NUMBER_CLOCK_SPEED = RANDOM_CLOCK_DIV + 1 //next number clock
+    
+        .clk(clk) {
+        .rst(rst) {
+
+            //counters
+            counter seed_clock(#SIZE(1),#DIV(RANDOM_CLOCK_DIV)) //technically just a slow clock
+            counter generate_next_number_clock(#SIZE(1), #DIV(GENERATE_NUMBER_CLOCK_SPEED)) //a slow clock thats
+            //slower than the seed clock 
+            
+            //random generator module
+            pn_gen random_number
+            
+
+        }
+
+        edge_detector edge_detector_next(.in(generate_next_number_clock.value))
+        edge_detector edge_detector_seed(.in(seed_clock.value))
+        dff seed[16] // not globally reset
+ 
+    }
+    
+    sig i[5]
+    
+    always {
+        random_number.seed = seed.q
+        random_number.next = edge_detector_next.out
+        if(edge_detector_seed.out){
+            seed.d = seed.q + 1
+        }
+        
+        i = random_number.num[3:0]
+        random_bomb = random_number.num[i+:2]
+    }
+}
