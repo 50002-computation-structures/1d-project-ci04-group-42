@@ -5,13 +5,14 @@ module multiplier (
 ) {
     
     
-    fa fa[496]
-    sig current_row_fa_index[$clog2(496)]
-    sig previous_row_fa_index[$clog2(496)]
+    //fa fa[496]
+    //sig current_row_fa_index[$clog2(496)]
+    //sig previous_row_fa_index[$clog2(496)]
     
     
     always {
-        
+        mul = 0
+        /*
         // LSB out
         mul[0] = b[0] & a[0]
         
@@ -58,6 +59,7 @@ module multiplier (
         fa.b[495] = fa.s[494]
         fa.cin[495] = 0
         mul[31] = fa.s[495]
+        */
         
     }
 }

@@ -50,7 +50,8 @@ module game_cu (
         //PER ROUND TIMER SEQUENCE
         DECREASE_TIMER,
         CHECK_TIMER_0,
-        BRANCH_TIMER,
+        BRANCH_TIMER_CHECK_ALL_SAFE_LIGHTS,
+        BRANCH_HAVE_SAFE_LIGHTS_ON,
         //PER ROUND AND USER INPUT PROCEDURE
         SET_CURRENT_LIGHT_INDEX_0, 
         SET_CURRENT_LIGHT_INDEX_3,
@@ -256,15 +257,30 @@ module game_cu (
                 wdsel = b00 
                 regfile_ra1 = d3 
                 constant = 32b0
-                game_fsm.d = GameStates.BRANCH_TIMER
+                game_fsm.d = GameStates.BRANCH_TIMER_CHECK_ALL_SAFE_LIGHTS
             
-            GameStates.BRANCH_TIMER:
+            GameStates.BRANCH_TIMER_CHECK_ALL_SAFE_LIGHTS:
+                regfile_ra2 = d9              //branch reg 
+                if (regfile_rd2[0]){                      //direct read in
+                    game_fsm.d = GameStates.BRANCH_HAVE_SAFE_LIGHTS_ON
+                }
+                else{
+                    game_fsm.d = GameStates.IDLE
+                }
+                alufn = b110011 //CMPEQ
+                asel = b11
+                bsel = b11
+                regfile_we = b1 
+                regfile_wa = d9  //branch reg
+                wdsel = b00 
+                
+            GameStates.BRANCH_HAVE_SAFE_LIGHTS_ON:
                 regfile_ra2 = d9              //branch reg 
                 if (regfile_rd2[0]){                      //direct read in
                     game_fsm.d = GameStates.TURN_ALL_LIGHTS_OFF
                 }
                 else{
-                    game_fsm.d = GameStates.IDLE
+                    game_fsm.d = GameStates.SET_RANDOM_LIGHTS
                 }
             
             //PER ROUND AND USER INPUT PROCEDURE
