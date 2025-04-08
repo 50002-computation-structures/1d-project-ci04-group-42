@@ -24,9 +24,9 @@ module game_datapath(
     output debug_general[4]
 ) {
     //constants
-    const CLK_FREQ = $is_sim() ? 1000 : 10000000
-    const SLOW_CLOCK = $is_sim() ? 9 : 21
-    const FAST_CLOCK = $is_sim() ? 9 : 21
+    //const CLK_FREQ = $is_sim() ? 1000 : 10000000
+    const SLOW_CLOCK = $is_sim() ? 9 : 25
+    const FAST_CLOCK = $is_sim() ? 9 : 25
     const RANDOM_CLOCK = $is_sim() ? 3 : 21
     
     

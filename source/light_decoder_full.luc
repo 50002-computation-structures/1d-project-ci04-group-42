@@ -15,18 +15,108 @@ module light_decoder_full (
         c0=encoded[1:0]
         c1=encoded[7:6]
         c2=encoded[13:12]
-        out=24d0
+        out=16d0
+        
+       /*case (encoded[1:0]){
+            b11:
+                c0=b00
+            
+            
+        }
+        
+        
+        
+        case (encoded[7:6]){
+            b11:
+                c1=b01
+            
+            
+        }
+        
+ 
+        
+        case (encoded[13:12]){
+            b11:
+                c2=b10
+
+        }*/
         
         //if no lights are on, turn on first light
         //basically, at least one light at all times
-        if (((~encoded[5])&&(~encoded[11])&&(~encoded[17]))||encoded[5]){ 
-            out[encoded[4:2]*3+:3]=c{c0,1}
+        /*if (((~encoded[5])&&(~encoded[11])&&(~encoded[17]))||encoded[5]){ 
+            out[encoded[4:2]*3+c0]=1
         }
         if (encoded[11]){
-            out[encoded[10:8]*3+:3]=c{c1,1}
+            out[encoded[10:8]*3+c1]=1
         }
         if (encoded[17]){
-            out[encoded[16:14]*3+:3]=c{c2,1}
+            out[encoded[16:14]*3+c2]=1
+        }*/
+        
+        out = 0
+        if (((~encoded[5])&&(~encoded[11])&&(~encoded[17]))||encoded[5]){ 
+            //out[encoded[4:2]*3+:3]=c{c0,1}
+            case(encoded[4:2]){
+                b000:
+                    out[2:0] = c{c0,1}
+                b001:
+                    out[5:3] = c{c0,1}
+                b010:
+                    out[8:6] = c{c0,1}
+                b011:
+                    out[11:9] = c{c0,1}
+                b100:
+                    out[14:12] = c{c0,1}
+                b101:
+                    out[17:15] = c{c0,1}
+                b110:
+                    out[20:18] = c{c0,1}
+                b111:
+                    out[23:21] = c{c0,1}
+            }
+            
+        }
+        if (encoded[11]){
+            //out[encoded[10:8]*3+:3]=c{c1,1}
+            case(encoded[10:8]){
+                b000:
+                    out[2:0] = c{c1,1}
+                b001:
+                    out[5:3] = c{c1,1}
+                b010:
+                    out[8:6] = c{c1,1}
+                b011:
+                    out[11:9] = c{c1,1}
+                b100:
+                    out[14:12] = c{c1,1}
+                b101:
+                    out[17:15] = c{c1,1}
+                b110:
+                    out[20:18] = c{c1,1}
+                b111:
+                    out[23:21] = c{c1,1}
+            }
+        }
+        if (encoded[17]){
+            //out[encoded[16:14]*3+:3]=c{c2,1}
+            case(encoded[16:14]){
+                b000:
+                    out[2:0] = c{c2,1}
+                b001:
+                    out[5:3] = c{c2,1}
+                b010:
+                    out[8:6] = c{c2,1}
+                b011:
+                    out[11:9] = c{c2,1}
+                b100:
+                    out[14:12] = c{c2,1}
+                b101:
+                    out[17:15] = c{c2,1}
+                b110:
+                    out[20:18] = c{c2,1}
+                b111:
+                    out[23:21] = c{c2,1}
+            }
         }
     }
 }

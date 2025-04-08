@@ -164,12 +164,6 @@
             {
                 "file": {
                     "type": "DiskFile",
-                    "path": "source/light_decoder_full.luc"
-                }
-            },
-            {
-                "file": {
-                    "type": "DiskFile",
                     "path": "source/pn_gen.luc"
                 }
             },
@@ -207,6 +201,12 @@
                 "file": {
                     "type": "DiskFile",
                     "path": "source/all_safe_lights_off.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/light_decoder_full.luc"
                 }
             }
         ],
