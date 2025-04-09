@@ -42,6 +42,7 @@ module game_cu (
         CHECK_TEMP_STORAGE_0,
         BRANCH_COUNT_FLASH, 
         TURN_ON_START_LIGHT_GREEN,
+        SET_BOMB_INITIAL,
         SET_RANDOM_LIGHTS, 
         SET_SEVSEG2_TIMER,
         
@@ -81,6 +82,7 @@ module game_cu (
         
         ////GAME OVER SEQUENCE
         TURN_ALL_LIGHTS_OFF,
+        TURN_OFF_BOMB,
         RESET_TIME_LIMIT,
         SET_INDICATOR_LIGHT_TO_RED,
         CHECK_SCORE_HIGH_SCORE,
@@ -190,7 +192,13 @@ module game_cu (
                 regfile_wa = d1 
                 wdsel = b00 
                 constant = c{30b0,2b11}
-                game_fsm.d=GameStates.SET_RANDOM_LIGHTS
+                game_fsm.d=GameStates.SET_BOMB_INITIAL
+            
+            GameStates.SET_BOMB_INITIAL:
+                regfile_we = b1 
+                regfile_wa = d4 
+                wdsel = b10 
+                game_fsm.d = GameStates.SET_RANDOM_LIGHTS
             
             GameStates.SET_RANDOM_LIGHTS:
                 regfile_we = b1 
@@ -508,6 +516,17 @@ module game_cu (
                 regfile_we = b1 
                 regfile_wa = d0 
                 wdsel = b11 
+                game_fsm.d = GameStates.TURN_OFF_BOMB
+            
+            GameStates.TURN_OFF_BOMB:
+                alufn = b010110 // XOR
+                asel = b00 
+                bsel = b01 
+                regfile_we = b1 
+                regfile_wa = d4
+                wdsel = b00 
+                regfile_ra1 = d4
+                constant = 32d1
                 game_fsm.d = GameStates.RESET_TIME_LIMIT
             
             GameStates.RESET_TIME_LIMIT:

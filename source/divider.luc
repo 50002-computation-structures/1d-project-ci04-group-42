@@ -8,11 +8,16 @@ module divider #(
     output v,
     output n
 ) {
-    sig quotient[SIZE]
-    sig b_abs[SIZE]
-    sig a_abs[SIZE]
+    //sig quotient[SIZE]
+    //sig b_abs[SIZE]
+    //sig a_abs[SIZE]
     
     always {
+        out=0
+        z=0
+        v=0
+        n=0
+        /*
         if (b[SIZE-1] & ~a[SIZE-1]) { //b negative, a positive
             a_abs=a
             b_abs = -b
@@ -39,6 +44,6 @@ module divider #(
         
         z = ~|quotient   
         v = 0 
-        n = quotient[SIZE-1] 
+        n = quotient[SIZE-1] */
     }
 }

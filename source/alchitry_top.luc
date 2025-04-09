@@ -12,7 +12,7 @@ module alchitry_top (
 ) {
     
     sig rst                 // reset signal
-    const CLK_FREQ = $is_sim() ? 1000 : 100000000
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000
     const SEVEN_SEG_DIV = $is_sim() ? 3 : 16 // put 3 for sim, 16 for hardware
     
     .clk(clk) {
@@ -72,7 +72,7 @@ module alchitry_top (
             led[game_datapath.indicator_led[0]]=1
         }
         
-        led[3:2] = game_datapath.bomb_color_led
+        led[4:2] = game_datapath.bomb_color_led
         
         
         

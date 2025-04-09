@@ -3,7 +3,7 @@ module bomb_unit #(
 )(
     input clk,  // clock
     input rst,  // reset
-    output random_bomb[2]
+    output random_bomb[3]
 ) {
     const GENERATE_NUMBER_CLOCK_SPEED = RANDOM_CLOCK_DIV + 1 //next number clock
     
@@ -37,6 +37,6 @@ module bomb_unit #(
         }
         
         i = random_number.num[3:0]
-        random_bomb = random_number.num[i+:2]
+        random_bomb = c{random_number.num[i+:2],b1}
     }
 }

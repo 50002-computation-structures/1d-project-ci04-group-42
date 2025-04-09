@@ -17,7 +17,7 @@ module game_datapath(
     output game_leds[24],
     output indicator_led[2],
     output score_led[32],
-    output bomb_color_led[2],
+    output bomb_color_led[3],
     output sevseg2_binary[32],
         
     // debug signals
@@ -26,7 +26,7 @@ module game_datapath(
     //constants
     //const CLK_FREQ = $is_sim() ? 1000 : 10000000
     const SLOW_CLOCK = $is_sim() ? 9 : 25
-    const FAST_CLOCK = $is_sim() ? 9 : 25
+    const FAST_CLOCK = $is_sim() ? 9 : 26
     const RANDOM_CLOCK = $is_sim() ? 3 : 21
     
     
@@ -95,13 +95,13 @@ module game_datapath(
         
         //drive the additional logic unit
         all_safe_lights_off_checker.light_decoded = game_regfiles.game_leds
-        all_safe_lights_off_checker.current_bomb = game_regfiles.bomb_color_led
+        all_safe_lights_off_checker.current_bomb = game_regfiles.bomb_color_led[2:1]
         
         // asel mux
         case(game_cu.asel){
             b00  : input_alu_a = game_regfiles.rd1
             b01  : input_alu_a = c{31b0, game_regfiles.game_leds[i]} 
-            b10  : input_alu_a = c{30b0,game_regfiles.game_leds[i+1+:2]} //selects color bits from i+2 to i+1
+            b10  : input_alu_a = c{29b0,game_regfiles.game_leds[i+1+:2],b1} //selects color bits from i+2 to i+1
             b11  :`input_alu_a = c{31b0, //use the output from the additional logic unit
                     all_safe_lights_off_checker.have_safe_light_on}
             default : 
@@ -127,7 +127,7 @@ module game_datapath(
         // wdsel mux
         case (game_cu.wdsel){
             b01 : game_regfiles.data = c{8b0,randomizer_unit.random_light_sequence}
-            b10 : game_regfiles.data = c{30b0,bomb_unit.random_bomb}
+            b10 : game_regfiles.data = c{29b0,bomb_unit.random_bomb}
             b11 : game_regfiles.data = 32b0
             default : 
                 game_regfiles.data = game_alu.out
