@@ -297,7 +297,7 @@ module alchitry_top (
         seg.values = c{bin_to_dec_converter_sevseg2.digits,bin_to_dec_converter_score.digits}
        
         
-        io_segment = ~seg.seg
+        io_segment = seg.seg //reversed for hardware requirement
         io_select = ~seg.sel
         
         
