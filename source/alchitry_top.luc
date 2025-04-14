@@ -4,11 +4,17 @@ module alchitry_top (
     output led[8],          // 8 user controllable LEDs
     input usb_rx,            // USB->Serial input
     output usb_tx,           // USB->Serial output
-    output io_led[3][8],     // LEDs on IO Shield
+    output io_led[4][8],     // LEDs on IO Shield
     output io_segment[8],        // 7-segment LEDs on IO Shield
     output io_select[4],        // Digit select on IO Shield
-    input io_button[5],      // 5 buttons on IO Shield
-    input io_dip[3][8]       // DIP switches on IO Shield
+    input io_button[5],      // io_button[1] as start button
+    input game_button[8],       // 8 game buttons
+    output indicator_light_red, //indicator lights
+    output indicator_light_green,
+    output bomb_light_blue, //bomb lights
+    output bomb_light_white,
+    output bomb_light_yellow,
+    output bomb_light_orange
 ) {
     
     sig rst                 // reset signal
@@ -21,8 +27,13 @@ module alchitry_top (
         reset_conditioner reset_cond
 
         //button conditioners and edge detectors
-        edge_detector button_edge_detector[5] (#RISE(5x{{1}}),#FALL(5x{{0}}))
-        button_conditioner io_button_cond[5](#CLK_FREQ(5x{{CLK_FREQ}})) 
+        button_conditioner game_button_conditioner[8] (#CLK_FREQ(8x{{CLK_FREQ}})) //all game buttons conditioner
+        
+        button_conditioner io_button_conditioner[5] (#CLK_FREQ(5x{{CLK_FREQ}})) //only 1 is used for start button
+        
+        edge_detector game_button_edge_detector[8] (#RISE(8x{{1}}), #FALL(8x{{0}}))
+        
+        edge_detector io_button_edge_detector[5] (#RISE(5x{{1}}), #FALL(5x{{0}})) 
         
         .rst(rst){
 
@@ -44,36 +55,238 @@ module alchitry_top (
         
         //default outputs
         led = 8b0
-        io_led = 3x{{8b0}}
+        io_led = 4x{{8b0}}
         io_segment = 7b1111111
         io_select = 4hF
         
         //button conditioners and edge detectors
-        io_button_cond.in = io_button
-        button_edge_detector.in= io_button_cond.out
+        game_button_conditioner.in = game_button 
+        game_button_edge_detector.in = game_button_conditioner.out
+        
+        //debug buttons
+        io_button_conditioner.in = io_button
+        io_button_edge_detector.in = io_button_conditioner.out
 
         //inputs to game datapath
-        game_datapath.start_button_pressed = button_edge_detector.out[1]
-        game_datapath.button_0_pressed = ~io_dip[0][0] & button_edge_detector.out[0]
-        game_datapath.button_1_pressed = ~io_dip[0][0] & button_edge_detector.out[4]
-        game_datapath.button_2_pressed = ~io_dip[0][0] & button_edge_detector.out[2]
-        game_datapath.button_3_pressed = ~io_dip[0][0] & button_edge_detector.out[3]
-        game_datapath.button_4_pressed = io_dip[0][0] & button_edge_detector.out[0]
-        game_datapath.button_5_pressed = io_dip[0][0] & button_edge_detector.out[4]
-        game_datapath.button_6_pressed = io_dip[0][0] & button_edge_detector.out[2]
-        game_datapath.button_7_pressed = io_dip[0][0] & button_edge_detector.out[3]
+        game_datapath.start_button_pressed = io_button_edge_detector.out[1] //only button 1 is used as start button
+        game_datapath.button_0_pressed = game_button_edge_detector.out[0]
+        game_datapath.button_1_pressed = game_button_edge_detector.out[1]
+        game_datapath.button_2_pressed = game_button_edge_detector.out[2]
+        game_datapath.button_3_pressed = game_button_edge_detector.out[3]
+        game_datapath.button_4_pressed = game_button_edge_detector.out[4]
+        game_datapath.button_5_pressed = game_button_edge_detector.out[5]
+        game_datapath.button_6_pressed = game_button_edge_detector.out[6]
+        game_datapath.button_7_pressed = game_button_edge_detector.out[7]
         
+        //set lights based on datapath values
         
-        io_led[0]=game_datapath.game_leds[7:0]
+        //game lights
+        
+        //SIMULATOR ONLY
+        /*io_led[0]=game_datapath.game_leds[7:0]
         io_led[1]=game_datapath.game_leds[15:8]
-        io_led[2]=game_datapath.game_leds[23:16]
+        io_led[2]=game_datapath.game_leds[23:16]*/
         
-        if(game_datapath.indicator_led[1]){
-            led[game_datapath.indicator_led[0]]=1
+        //fancier code
+        /*repeat(i,8,0,3){ //repeat for all 8 game lights
+            case(game_datapath.game_leds[i+:3]){ //selects the 3 bits to encode ith light
+                b001:
+                    bomb_light_blue = 1
+                    bomb_light_white = 0
+                    bomb_light_yellow = 0
+                    bomb_light_orange = 0
+                b011:
+                    bomb_light_blue = 0
+                    bomb_light_white = 1
+                    bomb_light_yellow = 0
+                    bomb_light_orange = 0
+                b101:
+                    bomb_light_blue = 0
+                    bomb_light_white = 0
+                    bomb_light_yellow = 1
+                    bomb_light_orange = 0
+                
+                b111:
+                    bomb_light_blue = 0
+                    bomb_light_white = 0
+                    bomb_light_yellow = 0
+                    bomb_light_orange = 1
+                default:
+                    bomb_light_blue = 0
+                    bomb_light_white = 0
+                    bomb_light_yellow = 0
+                    bomb_light_orange = 0
+            }
+        }*/
+        
+        //SET 1
+        case(game_datapath.game_leds[2:0]){
+            b001:
+                io_led[0][0] = 1
+            b011:
+                io_led[0][1] = 1
+            b101:
+                io_led[0][2] = 1
+            
+            b111:
+                io_led[0][3] = 1
+            default:
+                io_led[0][3:0]=4b0
         }
         
-        led[4:2] = game_datapath.bomb_color_led
+        //SET 2
+        case(game_datapath.game_leds[5:3]){
+            b001:
+                io_led[0][4] = 1
+            b011:
+                io_led[0][5] = 1
+            b101:
+                io_led[0][6] = 1
+            
+            b111:
+                io_led[0][7] = 1
+            default:
+                io_led[0][7:4]=4b0
+        }
         
+        //SET 3
+        case(game_datapath.game_leds[8:6]){
+            b001:
+                io_led[1][0] = 1
+            b011:
+                io_led[1][1] = 1
+            b101:
+                io_led[1][2] = 1
+            
+            b111:
+                io_led[1][3] = 1
+            default:
+                io_led[1][3:0]=4b0
+        }
+        
+        //SET 4
+        case(game_datapath.game_leds[11:9]){
+            b001:
+                io_led[1][4] = 1
+            b011:
+                io_led[1][5] = 1
+            b101:
+                io_led[1][6] = 1
+            
+            b111:
+                io_led[1][7] = 1
+            default:
+                io_led[1][7:4]=4b0
+        }
+        
+        //SET 5
+        case(game_datapath.game_leds[14:12]){
+            b001:
+                io_led[2][0] = 1
+            b011:
+                io_led[2][1] = 1
+            b101:
+                io_led[2][2] = 1
+            
+            b111:
+                io_led[2][3] = 1
+            default:
+                io_led[2][3:0]=4b0
+        }
+        
+        //SET 6
+        case(game_datapath.game_leds[17:15]){
+            b001:
+                io_led[2][4] = 1
+            b011:
+                io_led[2][5] = 1
+            b101:
+                io_led[2][6] = 1
+            
+            b111:
+                io_led[2][7] = 1
+            default:
+                io_led[2][7:4]=4b0
+        }
+        
+        //SET 7
+        case(game_datapath.game_leds[20:18]){
+            b001:
+                io_led[3][0] = 1
+            b011:
+                io_led[3][1] = 1
+            b101:
+                io_led[3][2] = 1
+            
+            b111:
+                io_led[3][3] = 1
+            default:
+                io_led[3][3:0]=4b0
+        }
+        
+        //SET 8
+        case(game_datapath.game_leds[23:21]){
+            b001:
+                io_led[3][4] = 1
+            b011:
+                io_led[3][5] = 1
+            b101:
+                io_led[3][6] = 1
+            
+            b111:
+                io_led[3][7] = 1
+            default:
+                io_led[3][7:4]=4b0
+        }
+        
+        //indicator lights
+        
+        case(game_datapath.indicator_led){
+            b10:
+                indicator_light_red = 1
+                indicator_light_green = 0
+            b11:
+                indicator_light_red = 0
+                indicator_light_green = 1
+            default:
+                indicator_light_red = 0
+                indicator_light_green = 0
+        }
+        
+        //bomb lights
+        
+        case(game_datapath.bomb_color_led){
+            b001:
+                bomb_light_blue = 1
+                bomb_light_white = 0
+                bomb_light_yellow = 0
+                bomb_light_orange = 0
+            b011:
+                bomb_light_blue = 0
+                bomb_light_white = 1
+                bomb_light_yellow = 0
+                bomb_light_orange = 0
+            b101:
+                bomb_light_blue = 0
+                bomb_light_white = 0
+                bomb_light_yellow = 1
+                bomb_light_orange = 0
+            
+            b111:
+                bomb_light_blue = 0
+                bomb_light_white = 0
+                bomb_light_yellow = 0
+                bomb_light_orange = 1
+            default:
+                bomb_light_blue = 0
+                bomb_light_white = 0
+                bomb_light_yellow = 0
+                bomb_light_orange = 0
+        }
+        
+        
+        //SIMULATOR ONLY
+        led[4:2] = game_datapath.bomb_color_led
         
         
         //seven segments
