@@ -3,68 +3,67 @@ PINOUT(V1), STANDARD(LVCMOS33) {
     pin io_led[0][1] B20
     pin io_led[0][2] B18
     pin io_led[0][3] B17
-    pin io_led[0][4] B15
-    pin io_led[0][5] B14
-    pin io_led[0][6] B12
-    pin io_led[0][7] B11
+    pin io_led[0][4] A30
+    pin io_led[0][5] A31
+    pin io_led[0][6] A33
+    pin io_led[0][7] A34
     pin io_led[1][0] B9
     pin io_led[1][1] B8
     pin io_led[1][2] B6
     pin io_led[1][3] B5
     pin io_led[1][4] B3
     pin io_led[1][5] B2
-    pin io_led[1][6] A24
-    pin io_led[1][7] A23
-    pin io_led[2][0] A21
-    pin io_led[2][1] A20
-    pin io_led[2][2] A18
-    //pin io_led[2][3] A17
-    pin io_led[2][3] A28
-    pin io_led[2][4] A15
-    pin io_led[2][5] A14
-    pin io_led[2][6] A12
-    pin io_led[2][7] A11
-    pin io_led[3][0] A30
-    pin io_led[3][1] A31
-    pin io_led[3][2] A33
-    pin io_led[3][3] A34
-    pin io_led[3][4] A36
-    pin io_led[3][5] A37
-    pin io_led[3][6] A39
-    pin io_led[3][7] A40
+    pin io_led[1][6] B42
+    pin io_led[1][7] B43
+    pin io_led[2][0] C46 
+    pin io_led[2][1] C49
+    pin io_led[2][2] C45
+    pin io_led[2][3] C48
+    pin io_led[2][4] B45
+    pin io_led[2][5] B46
+    pin io_led[2][6] B48
+    pin io_led[2][7] B49
+    pin io_led[3][0] B15
+    pin io_led[3][1] B14
+    pin io_led[3][2] B12
+    pin io_led[3][3] B11
+    pin io_led[3][4] C5
+    pin io_led[3][5] C2
+    pin io_led[3][6] C6
+    pin io_led[3][7] C3
     
-    pin indicator_light_red B42
-    pin indicator_light_green B43
+    pin indicator_light_red A24
+    pin indicator_light_green A23
     
-    pin bomb_light_blue B45
-    pin bomb_light_white B46
-    pin bomb_light_yellow B48
-    pin bomb_light_orange B49
+    pin bomb_light_blue A15
+    pin bomb_light_white A14
+    pin bomb_light_yellow A12
+    pin bomb_light_orange A11
     
     PULL(DOWN) {
         pin game_button[0] B30
-        pin game_button[1] B31
+        pin game_button[1] C42
         pin game_button[2] B33
         pin game_button[3] B34
-        pin game_button[4] B36
+        pin game_button[4] C8
         pin game_button[5] B37
         pin game_button[6] B39
-        pin game_button[7] B40
+        pin game_button[7] C9
         //pin io_dip[1][0] B42
         //pin io_dip[1][1] B43
         //pin io_dip[1][2] B45
         //pin io_dip[1][3] B46
         //pin io_dip[1][4] B48
         //pin io_dip[1][5] B49
-        //pin io_dip[1][6] A27
-        //pin io_dip[1][7] A28
+        pin io_dip[0] A27 //io dip [1][6] //for troubleshoot
+        pin io_dip[1] A28 //io dip [1][7]
         
 
         pin io_button[0] B28
-        pin io_button[1] B27
+        pin io_button[1] C43
         pin io_button[2] B23
         pin io_button[3] B24
-        pin io_button[4] C49
+        pin io_button[4] C40
     }
     
     pin io_select[0] A9

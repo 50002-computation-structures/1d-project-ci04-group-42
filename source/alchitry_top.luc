@@ -14,7 +14,8 @@ module alchitry_top (
     output bomb_light_blue, //bomb lights
     output bomb_light_white,
     output bomb_light_yellow,
-    output bomb_light_orange
+    output bomb_light_orange,
+    input io_dip[2] //troubleshoot
 ) {
     
     sig rst                 // reset signal
