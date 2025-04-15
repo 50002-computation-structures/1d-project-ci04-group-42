@@ -377,7 +377,7 @@ module game_cu (
                     game_fsm.d = GameStates.CHECK_COLOR_BOMB_COLOR
                 }
                 else{
-                    game_fsm.d = GameStates.TURN_ALL_LIGHTS_OFF
+                    game_fsm.d = GameStates.IDLE
                 }
             
             GameStates.CHECK_COLOR_BOMB_COLOR:
